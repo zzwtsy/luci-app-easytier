@@ -1,0 +1,127 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+config_value() {
+	uci -q get "easytier.@easytier[0].$1"
+}
+
+process_pid() {
+	local name="${1##*/}"
+	# 只将受限的进程基名传给 pidof，避免配置路径被解释为命令选项。
+	case "$name" in
+		''|-*|*[!A-Za-z0-9_.+-]*) return 0 ;;
+	esac
+	pidof "$name" 2>/dev/null | awk '{ print $1 }'
+}
+
+core_bin="$(config_value easytierbin)"
+web_bin="$(config_value webbin)"
+[ -n "$core_bin" ] || core_bin=/usr/bin/easytier-core
+[ -n "$web_bin" ] || web_bin=/usr/bin/easytier-web
+cli_bin="$(dirname "$core_bin")/easytier-cli"
+
+emit_status() {
+	local core_pid web_pid core_version web_version core_rss web_rss core_enabled web_enabled
+	core_pid="$(process_pid "$core_bin")"
+	web_pid="$(process_pid "$web_bin")"
+	core_enabled="$(config_value enabled)"
+	web_enabled="$(config_value web_enabled)"
+	[ "$core_enabled" = 1 ] || core_enabled=0
+	[ "$web_enabled" = 1 ] || web_enabled=0
+	if command -v timeout >/dev/null 2>&1; then
+		[ ! -x "$core_bin" ] || core_version="$(timeout 2 "$core_bin" -V 2>/dev/null | head -n 1)"
+		[ ! -x "$web_bin" ] || web_version="$(timeout 2 "$web_bin" -V 2>/dev/null | head -n 1)"
+	fi
+	core_rss="$(awk '/^VmRSS:/ { printf "%.1f MiB", $2 / 1024 }' "/proc/$core_pid/status" 2>/dev/null)"
+	web_rss="$(awk '/^VmRSS:/ { printf "%.1f MiB", $2 / 1024 }' "/proc/$web_pid/status" 2>/dev/null)"
+	json_init
+	json_add_boolean core_running "$([ -n "$core_pid" ] && echo 1 || echo 0)"
+	json_add_boolean web_running "$([ -n "$web_pid" ] && echo 1 || echo 0)"
+	json_add_boolean core_enabled "$core_enabled"
+	json_add_boolean web_enabled "$web_enabled"
+	json_add_string core_version "${core_version:-unknown}"
+	json_add_string web_version "${web_version:-unknown}"
+	json_add_string core_memory "${core_rss:--}"
+	json_add_string web_memory "${web_rss:--}"
+	json_add_string interface "$(config_value tunname)"
+	json_dump
+}
+
+emit_conninfo() {
+	local key="$1" format="$2" first second output
+	# 此白名单与 LuCI 页面命令列表对应，拒绝客户端拼接任意 easytier-cli 子命令。
+	case "$key" in
+		node) first=node ;;
+		peer) first=peer ;;
+		connector) first=connector ;;
+		stun) first=stun ;;
+		route) first=route ;;
+		peer-center) first=peer-center ;;
+		vpn-portal) first=vpn-portal ;;
+		proxy) first=proxy ;;
+		acl) first=acl; second=stats ;;
+		mapped-listener) first=mapped-listener ;;
+		stats) first=stats ;;
+		*) exit 2 ;;
+	esac
+	if ! process_pid "$core_bin" | grep -q .; then
+		output="EasyTier Core is not running"
+	elif [ -x "$cli_bin" ]; then
+		# RPC 查询有固定超时，防止命令行查询长时间占用 rpcd 请求。
+		if ! command -v timeout >/dev/null 2>&1; then
+			output="The timeout utility is unavailable"
+		else
+			# 可选的 json 输出供页面表格化；旧版本 CLI 不支持时返回错误文本，由页面回退。
+			if [ "$format" = "json" ]; then
+				set -- "$cli_bin" --output json "$first"
+			else
+				set -- "$cli_bin" "$first"
+			fi
+			[ -n "$second" ] && set -- "$@" "$second"
+			output="$(timeout 5 "$@" 2>&1)"
+		fi
+	else
+		output="easytier-cli is not installed"
+	fi
+	json_init
+	json_add_string output "$output"
+	json_dump
+}
+
+emit_netinfo() {
+	local name="$1" addresses rx tx mtu
+	[ -n "$name" ] || name="$(config_value tunname)"
+	[ -n "$name" ] || name=tun0
+	# 接口名还会拼入 sysfs 路径，因此拒绝路径分隔符和父目录片段。
+	case "$name" in *[!A-Za-z0-9_.:-]*|*..*) exit 2 ;; esac
+	addresses="$(ip -o address show dev "$name" 2>/dev/null | sed 's/^[0-9]*: [^ ]* //')"
+	rx="$(cat "/sys/class/net/$name/statistics/rx_bytes" 2>/dev/null || echo 0)"
+	tx="$(cat "/sys/class/net/$name/statistics/tx_bytes" 2>/dev/null || echo 0)"
+	mtu="$(cat "/sys/class/net/$name/mtu" 2>/dev/null || echo 0)"
+	json_init
+	json_add_string interface "$name"
+	json_add_string addresses "$addresses"
+	json_add_string rx_bytes "$rx"
+	json_add_string tx_bytes "$tx"
+	json_add_string mtu "$mtu"
+	json_dump
+}
+
+emit_logs() {
+	local component="$1" output
+	case "$component" in core|web) ;; *) exit 2 ;; esac
+	output="$(logread 2>/dev/null | grep -i easytier | tail -n 200)"
+	json_init
+	json_add_string output "$output"
+	json_dump
+}
+
+# rpcd ACL 仅授权这些只读入口；脚本再做一次动作白名单校验，避免越权调用其他功能。
+case "$1" in
+	status) emit_status ;;
+	conninfo) emit_conninfo "$2" "$3" ;;
+	netinfo) emit_netinfo "$2" ;;
+	logs) emit_logs "$2" ;;
+	*) exit 2 ;;
+esac

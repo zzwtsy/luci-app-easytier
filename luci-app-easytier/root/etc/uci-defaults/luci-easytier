@@ -1,13 +1,8 @@
 #!/bin/sh
 
-uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@easytier[-1]
-	add ucitrack easytier
-	set ucitrack.@easytier[-1].init=easytier
-	commit ucitrack
-EOF
-
-chmod +x /etc/init.d/easytier
-/etc/init.d/easytier enable
-rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+# 配置目录供 TOML、机器 ID 和 Web 数据库使用；首次安装时启用服务。
+mkdir -p /etc/easytier
+[ -x /etc/init.d/easytier ] && /etc/init.d/easytier enable
+# 清除 LuCI 生成的导航与模块缓存，让安装后的菜单立即可见。
+rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*
 exit 0

@@ -54,7 +54,8 @@ jobs:
           - x86_64
           
         sdk:
-          - 22.03.7
+          - 24.10.8
+          - 25.12.5
           - SNAPSHOT
 
     steps:
@@ -108,17 +109,15 @@ jobs:
 
           ## Package types / 包格式
 
-          - \`*.ipk\`: OpenWrt 22.03.x and other opkg-based firmware package. / 适用于 OpenWrt 22.03.x 等使用 opkg 的固件。
-          - \`*.apk\`: OpenWrt SNAPSHOT and newer apk-based firmware package. / 适用于 OpenWrt SNAPSHOT 等使用 apk 的新版固件。
+          - \`*.apk\`: OpenWrt 24.10, 25.12, and Snapshot package format. / 适用于 OpenWrt 24.10、25.12 和 Snapshot。
 
-          Use packages that match your device architecture and firmware package manager. Do not mix \`ipk\` and \`apk\` on the same system.
-          请下载与设备 CPU 架构和固件包管理器匹配的包，不要在同一系统中混用 \`ipk\` 和 \`apk\`。
+          Use packages that match your device architecture. / 请下载与设备 CPU 架构匹配的包。
 
           ## What each package does / 每个包的作用
 
           - \`easytier\`: EasyTier core binaries installed to \`/usr/bin\`, including \`easytier-core\`, \`easytier-cli\`, and the embedded web console binary when supported by the architecture. / EasyTier 核心程序包，安装到 \`/usr/bin\`，包含 \`easytier-core\`、\`easytier-cli\`，并在架构支持时集成自建 Web 控制台程序。
           - \`easytier-noweb\`: EasyTier core binaries installed to \`/usr/bin\`, without the embedded web console. Use this on devices with limited storage or when you do not need the self-hosted web console. / 不包含自建 Web 控制台的核心程序包，同样安装到 \`/usr/bin\`。适合存储空间不足或不需要自建 Web 控制台的设备。
-          - \`luci-app-easytier\`: LuCI web interface, init script, UCI config, upload/download tools, and service management pages. / LuCI 管理界面，包含启动脚本、UCI 配置、上传/下载工具和服务管理页面。
+          - \`luci-app-easytier\`: LuCI web interface, init script, UCI config, restricted manual-upload tools, and service management pages. / LuCI 管理界面，包含启动脚本、UCI 配置、受限手动上传工具和服务管理页面。
           - \`luci-i18n-easytier-zh-cn\`: Simplified Chinese translation for the LuCI interface. / LuCI 界面的简体中文语言包。
 
           ## Recommended install order / 推荐安装顺序
@@ -130,30 +129,8 @@ jobs:
           If you need the EasyTier binaries in a custom directory, do not install \`easytier\` or \`easytier-noweb\`. Install only \`luci-app-easytier\` and the language package, then open LuCI -> VPN -> EasyTier -> Upload Program, set the program directory, save it, and upload the official EasyTier release files manually.
           如果需要把 EasyTier 程序安装到自定义目录，不要安装 \`easytier\` 或 \`easytier-noweb\`。只安装 \`luci-app-easytier\` 和语言包，然后进入 LuCI -> VPN -> EasyTier -> 上传程序，设置程序目录并保存，再手动上传官方 EasyTier Release 中的程序文件。
 
-          You can also use the online download function on the Upload Program page. This requires network access to GitHub. If GitHub access is slow or unavailable, configure acceleration mirror URLs before downloading.
-          也可以在“上传程序”页面使用在线下载功能。该功能需要设备能正常访问 GitHub；如果访问慢或无法访问，请先配置加速镜像地址。
-
-          ## IPK installation / IPK 安装方法
-
-          Upload the packages to \`/tmp\` on your OpenWrt device, then run:
-          将安装包上传到 OpenWrt 设备的 \`/tmp\` 目录，然后执行：
-
-          \`\`\`sh
-          opkg update
-          opkg install /tmp/easytier_*.ipk
-          opkg install /tmp/luci-app-easytier_*.ipk
-          opkg install /tmp/luci-i18n-easytier-zh-cn_*.ipk
-          \`\`\`
-
-          For the no-web core package:
-          如果安装不含 Web 控制台的核心包：
-
-          \`\`\`sh
-          opkg update
-          opkg install /tmp/easytier-noweb_*.ipk
-          opkg install /tmp/luci-app-easytier_*.ipk
-          opkg install /tmp/luci-i18n-easytier-zh-cn_*.ipk
-          \`\`\`
+          The router does not download or update EasyTier binaries at runtime. Update packaged binaries with the package manager; manually upload binaries only for custom builds or custom paths.
+          插件不会在设备运行时下载或更新 EasyTier 程序。程序包请使用包管理器更新；仅在自定义构建或自定义路径时手动上传程序。
 
           ## APK installation / APK 安装方法
 
@@ -176,16 +153,6 @@ jobs:
           \`\`\`
 
           ## Install LuCI only and upload binaries manually / 只安装 LuCI 并手动上传程序
-
-          IPK:
-
-          \`\`\`sh
-          opkg update
-          opkg install /tmp/luci-app-easytier_*.ipk
-          opkg install /tmp/luci-i18n-easytier-zh-cn_*.ipk
-          \`\`\`
-
-          APK:
 
           \`\`\`sh
           apk add --allow-untrusted /tmp/luci-app-easytier_*.apk
@@ -212,7 +179,7 @@ jobs:
           - Wrong architecture or package format: download the zip that matches your device architecture and firmware version. / 架构或包格式错误：请下载与设备架构和固件版本匹配的压缩包。
           - Missing TUN support: install or enable \`kmod-tun\`. / 缺少 TUN 支持：安装或启用 \`kmod-tun\`。
           - LuCI menu not visible: refresh the browser, clear LuCI cache, or run \`rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*\` and re-login. / LuCI 菜单不显示：刷新浏览器、清理 LuCI 缓存，或执行 \`rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*\` 后重新登录。
-          - Online download fails: check DNS, gateway, and GitHub connectivity; configure acceleration mirror URLs or upload files manually. / 在线下载失败：检查 DNS、网关和 GitHub 连通性；配置加速镜像地址或手动上传程序。
+          - Manual upload is rejected: check that the asset matches the device architecture and contains EasyTier binaries. / 手动上传被拒绝：检查程序包是否匹配设备架构且包含 EasyTier 程序。
           - Not enough storage: install \`easytier-noweb\`, or install only LuCI and upload binaries to a larger custom directory. / 存储空间不足：安装 \`easytier-noweb\`，或只安装 LuCI 并把程序上传到容量更大的自定义目录。
           - Service does not start: verify the program path, executable permission, and configuration; then restart with \`/etc/init.d/easytier restart\`. / 服务无法启动：检查程序路径、可执行权限和配置，然后执行 \`/etc/init.d/easytier restart\`。
 
@@ -243,7 +210,7 @@ jobs:
           shopt -s nullglob
           for dir in artifacts/*; do
             name=$(basename "$dir")
-            files=("$dir"/*.ipk "$dir"/*.apk "$dir"/*.md)
+            files=("$dir"/*.apk "$dir"/*.md)
             if [ ${#files[@]} -gt 0 ]; then
               zip -j "release/EasyTier-${{ env.TAG }}-${name}.zip" "${files[@]}"
             fi
@@ -258,12 +225,12 @@ jobs:
 
              > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-easytier?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.TAG }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github)
 
-             - 其中 **`22.03.7`** 里面是ipk安装包 **`SNAPSHOT`** 里面是apk安装包
+             - OpenWrt **`24.10.8`**、**`25.12.5`** 和 **`SNAPSHOT`** 构建均生成 APK 安装包。
 
              - **`*.apk` 是OpenWrt新版的APK包** 对于apk包跳过证书命令
              `apk add --allow-untrusted luci-app-easytier.apk`
 
-             - 每个压缩包内包含 **`README_PACKAGE.md`** 中英双语说明，包含各包作用、安装顺序、IPK/APK安装方法和常见问题处理
+             - 每个压缩包内包含 **`README_PACKAGE.md`** 中英双语说明，包含各包作用、APK 安装方法和常见问题处理
 
              ${{ github.event.inputs.text }}
            

@@ -1,0 +1,36 @@
+#!/bin/sh
+
+interval="$1"
+targets="$2"
+# 将检查周期限制在 1 到 60 分钟，避免错误配置造成过密轮询或过久失联。
+case "$interval" in ''|*[!0-9]*) interval=2 ;; esac
+[ "${#interval}" -le 2 ] && [ "$interval" -ge 1 ] && [ "$interval" -le 60 ] || interval=2
+interval=$((interval * 60))
+
+set -f
+while :; do
+	if ! command -v ping >/dev/null 2>&1; then
+		logger -t easytier-watchdog "The ping utility is unavailable; skipping this check"
+		sleep "$interval"
+		continue
+	fi
+	valid=0
+	online=0
+	# 目标来自 UCI 列表；关闭通配符展开后逐项 ping，任一目标可达即保留当前进程。
+	for target in $targets; do
+		case "$target" in *[!0-9.]*|.*|*.) continue ;; esac
+		valid=1
+		if ping -4 -c 2 -W 4 "$target" >/dev/null 2>&1; then
+			online=1
+			break
+		fi
+	done
+	if [ "$valid" = 0 ]; then
+		logger -t easytier-watchdog "No valid IPv4 targets are configured; skipping this check"
+	elif [ "$online" = 0 ]; then
+		# 只有配置中存在有效目标且全部不可达时才重启 Core，避免空列表触发重启。
+		logger -t easytier-watchdog "All configured IPv4 targets are unreachable; restarting EasyTier Core"
+		/etc/init.d/easytier restart >/dev/null 2>&1 &
+	fi
+	sleep "$interval"
+done

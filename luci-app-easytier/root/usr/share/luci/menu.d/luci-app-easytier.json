@@ -1,0 +1,64 @@
+{
+	"admin/vpn/easytier": {
+		"title": "EasyTier",
+		"order": 46,
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	},
+	"admin/vpn/easytier/status": {
+		"title": "Overview",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "easytier/status"
+		},
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	},
+	"admin/vpn/easytier/config": {
+		"title": "Settings",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "easytier/config"
+		},
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	},
+	"admin/vpn/easytier/diagnostics": {
+		"title": "Diagnostics",
+		"order": 3,
+		"action": {
+			"type": "view",
+			"path": "easytier/diagnostics"
+		},
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	},
+	"admin/vpn/easytier/toml": {
+		"title": "Configuration File",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "easytier/toml"
+		},
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	},
+	"admin/vpn/easytier/web": {
+		"title": "Web Console",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "easytier/web"
+		},
+		"depends": {
+			"acl": [ "luci-app-easytier" ]
+		}
+	}
+}
