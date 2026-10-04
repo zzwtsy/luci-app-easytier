@@ -34,8 +34,8 @@ elif mode == "apk":
             "name": item.get("name", ""),
             "filename": f"{item.get('name', '')}-{item.get('version', '')}.apk",
             "size": int(item.get("file-size", -1)),
-            # APK's `hashes` field is its package identity, not a SHA256 of
-            # the complete .apk file. `apk verify` checks the archive itself.
+            # APK's `hashes` field is a package identity, not a SHA256 of the
+            # complete .apk file. The signed index is verified separately.
             "sha256": None,
         }
         for item in data.get("packages", [])
