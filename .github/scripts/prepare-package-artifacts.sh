@@ -5,7 +5,16 @@ set -euo pipefail
 : "${BUILD_TARGET:?BUILD_TARGET is required}"
 : "${SDK:?SDK is required}"
 : "${RELEASE_TAG:=}"
+: "${REQUIRE_PACKAGE_INDEX:=1}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+
+if [[ -n "$RELEASE_TAG" ]]; then
+	REQUIRE_PACKAGE_INDEX=1
+fi
+case "$REQUIRE_PACKAGE_INDEX" in
+	0|1) ;;
+	*) echo "REQUIRE_PACKAGE_INDEX must be 0 or 1" >&2; exit 1 ;;
+esac
 
 case "$SDK" in
 	24.10.*)
@@ -53,26 +62,28 @@ for package in luci-app-easytier luci-i18n-easytier-zh-cn; do
 	fi
 done
 
-case "$SDK" in
-	24.10.*)
-		for index in Packages Packages.gz; do
-			if [[ ! -s "$PACKAGE_DIR/$index" ]]; then
-				echo "Missing $index for $BUILD_TARGET in $PACKAGE_DIR" >&2
+if [[ "$REQUIRE_PACKAGE_INDEX" == 1 ]]; then
+	case "$SDK" in
+		24.10.*)
+			for index in Packages Packages.gz; do
+				if [[ ! -s "$PACKAGE_DIR/$index" ]]; then
+					echo "Missing $index for $BUILD_TARGET in $PACKAGE_DIR" >&2
+					exit 1
+				fi
+			done
+			if [[ -n "$RELEASE_TAG" && ! -s "$PACKAGE_DIR/Packages.sig" ]]; then
+				echo "Missing signed Packages.sig for tagged release $BUILD_TARGET" >&2
 				exit 1
 			fi
-		done
-		if [[ -n "$RELEASE_TAG" && ! -s "$PACKAGE_DIR/Packages.sig" ]]; then
-			echo "Missing signed Packages.sig for tagged release $BUILD_TARGET" >&2
-			exit 1
-		fi
-		;;
-	25.12.*|SNAPSHOT)
-		if [[ ! -s "$PACKAGE_DIR/packages.adb" ]]; then
-			echo "Missing packages.adb for $BUILD_TARGET in $PACKAGE_DIR" >&2
-			exit 1
-		fi
-		;;
-esac
+			;;
+		25.12.*|SNAPSHOT)
+			if [[ ! -s "$PACKAGE_DIR/packages.adb" ]]; then
+				echo "Missing packages.adb for $BUILD_TARGET in $PACKAGE_DIR" >&2
+				exit 1
+			fi
+			;;
+	esac
+fi
 
 export BUILD_TARGET EASYTIER_VERSION LUCI_APP_VERSION
 export PACKAGE_EXTENSION="$extension" PACKAGE_MANAGER="$manager"

@@ -67,7 +67,6 @@ jobs:
         env:
           ARCH: x86_64-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          INDEX: 1
           # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
           PACKAGES: easytier easytier-noweb luci-app-easytier
           NO_REFRESH_CHECK: 1
@@ -76,6 +75,7 @@ jobs:
         env:
           PACKAGE_DIR: bin/packages/x86_64/packages_ci
           BUILD_TARGET: x86_64-${{ matrix.sdk }}
+          REQUIRE_PACKAGE_INDEX: 0
           SDK: ${{ matrix.sdk }}
         run: .github/scripts/prepare-package-artifacts.sh
 
@@ -107,7 +107,6 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          INDEX: 1
           # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
           PACKAGES: easytier easytier-noweb luci-app-easytier
           NO_REFRESH_CHECK: 1
@@ -116,5 +115,6 @@ jobs:
         env:
           PACKAGE_DIR: bin/packages/${{ matrix.arch }}/packages_ci
           BUILD_TARGET: ${{ matrix.arch }}-${{ matrix.sdk }}
+          REQUIRE_PACKAGE_INDEX: 0
           SDK: ${{ matrix.sdk }}
         run: .github/scripts/prepare-package-artifacts.sh
