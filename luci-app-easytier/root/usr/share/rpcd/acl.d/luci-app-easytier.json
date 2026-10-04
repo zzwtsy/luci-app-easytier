@@ -1,12 +1,38 @@
 {
-  "luci-app-easytier": {
-    "description": "Grant UCI access for luci-app-easytier",
-    "read": {
-      "uci": [ "easytier" ],
-      "cgi-io": [ "upload" ]
-    },
-    "write": {
-      "uci": [ "easytier" ]
-    }
-  }
+	"luci-app-easytier": {
+		"description": "Manage EasyTier services and configuration",
+		"read": {
+			"uci": [ "easytier" ],
+			"ubus": {
+				"file": [ "exec", "read" ]
+			},
+			"file": {
+				"/usr/libexec/easytier/rpc status": [ "exec" ],
+				"/usr/libexec/easytier/rpc conninfo *": [ "exec" ],
+				"/usr/libexec/easytier/rpc netinfo": [ "exec" ],
+				"/usr/libexec/easytier/rpc netinfo *": [ "exec" ],
+				"/usr/libexec/easytier/rpc logs *": [ "exec" ],
+				"/etc/easytier/config.toml": [ "read" ],
+				"/etc/easytier/et_machine_id": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "easytier" ],
+			"ubus": {
+				"file": [ "exec", "remove", "write" ]
+			},
+			"file": {
+				"/usr/libexec/easytier/manage clear-logs": [ "exec" ],
+				"/usr/libexec/easytier/manage reset-database": [ "exec" ],
+				"/usr/libexec/easytier/manage install-upload *": [ "exec" ],
+				"/etc/init.d/easytier start": [ "exec" ],
+				"/etc/init.d/easytier stop": [ "exec" ],
+				"/etc/init.d/easytier restart": [ "exec" ],
+				"/etc/easytier/config.toml": [ "write" ],
+				"/etc/easytier/et_machine_id": [ "write", "remove" ],
+				"/tmp/easytier-upload": [ "write" ]
+			},
+			"cgi-io": [ "upload" ]
+		}
+	}
 }

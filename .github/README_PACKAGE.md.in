@@ -1,0 +1,37 @@
+# EasyTier OpenWrt Packages / EasyTier OpenWrt 安装包说明
+
+Build target / 构建目标: @BUILD_TARGET@
+EasyTier core version / EasyTier 核心版本: @EASYTIER_VERSION@
+LuCI package version / LuCI 插件版本: @LUCI_APP_VERSION@
+Package format / 安装包格式: .@PACKAGE_EXTENSION@ using @PACKAGE_MANAGER@
+
+Download packages matching your device architecture and OpenWrt release. / 请下载与设备架构和 OpenWrt 版本匹配的安装包。
+
+## Packages / 安装包
+
+- easytier: EasyTier Core and CLI, plus the embedded Web Console when supported. / EasyTier 核心程序和命令行工具；架构支持时还包含内嵌 Web 控制台。
+- easytier-noweb: Core and CLI without the embedded Web Console. / 不含内嵌 Web 控制台的核心程序。
+- luci-app-easytier: LuCI interface, service scripts, UCI configuration, and tools. / LuCI 管理界面、服务脚本、UCI 配置和管理工具。
+- luci-i18n-easytier-zh-cn: Simplified Chinese translation. / 简体中文翻译。
+
+Install one core package together with the LuCI package. The two core packages conflict; choose only one. / 核心程序包二选一，并与 LuCI 包一起安装；两个核心包互相冲突。
+
+## Install the standard package / 安装标准核心包
+
+Upload the packages to /tmp, then run: / 将安装包上传到 /tmp 后执行：
+
+    @INSTALL_STANDARD@
+
+## Install the no-web package / 安装不含 Web 控制台的核心包
+
+    @INSTALL_NOWEB@
+
+## Install LuCI only / 只安装 LuCI
+
+    @INSTALL_LUCI_ONLY@
+
+If you install LuCI only, upload matching EasyTier binaries from the official release in LuCI under VPN → EasyTier → Overview. The plugin does not download binaries at runtime. / 只安装 LuCI 时，可在 VPN → EasyTier → 概览 中上传匹配架构的官方 EasyTier 程序。插件不会在运行时下载程序。
+
+After installation, refresh LuCI and configure the network name, secret, peers, and firewall policy. / 安装后刷新 LuCI，并配置网络名称、密钥、节点和防火墙策略。
+
+For storage-constrained devices, prefer easytier-noweb. Enable kmod-tun if the device does not already provide TUN support. / 存储空间有限时可选用 easytier-noweb。如果设备尚未提供 TUN 支持，请安装或启用 kmod-tun。

@@ -1,0 +1,7 @@
+#!/bin/sh
+uci -q batch <<'EOI'
+set luci.languages.zh_cn='简体中文 (Simplified Chinese)'
+commit luci
+EOI
+rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*
+exit 0

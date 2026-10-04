@@ -1,206 +1,183 @@
 #!/bin/sh
-# EasyTier Firewall Management
-# Manages firewall rules and network interfaces for EasyTier
 
-# 引入工具函数
-. /usr/share/easytier/utils.sh 2>/dev/null || true
-
-# 添加单条防火墙规则
-# 参数: $1=规则名称 $2=协议 $3=端口 $4=描述
-add_firewall_rule() {
-	local rule_name="$1"
-	local proto="$2"
-	local port="$3"
-	local desc="$4"
-	
-	[ -z "$port" ] && return 1
-	
-	log_message "INFO" "easytier" "添加防火墙规则 ${rule_name} 放行端口 ${port}" "/tmp/easytier.log"
-	
-	uci -q delete "firewall.${rule_name}"
-	uci set "firewall.${rule_name}=rule"
-	uci set "firewall.${rule_name}.name=${rule_name}"
-	uci set "firewall.${rule_name}.target=ACCEPT"
-	uci set "firewall.${rule_name}.src=wan"
-	uci set "firewall.${rule_name}.proto=${proto}"
-	uci set "firewall.${rule_name}.dest_port=${port}"
-	uci set "firewall.${rule_name}.enabled=1"
+set_option() {
+	local package="$1" section="$2" option="$3" value="$4"
+	# 只在值变化时写入 UCI，避免服务重复启动时产生无意义的配置变更。
+	[ "$(uci -q get "$package.$section.$option")" = "$value" ] || uci set "$package.$section.$option=$value"
 }
 
-# 设置所有 EasyTier 防火墙规则
-# 需要设置的变量: tcp_port, udp_port, ws_port, wss_port, wg_port, quic_port, socks_port
-set_firewall_rules() {
-	[ -n "$tcp_port" ] && add_firewall_rule "easytier_tcp_udp" "tcp udp" "$tcp_port" "EasyTier TCP/UDP"
-	[ -n "$udp_port" ] && add_firewall_rule "easytier_udp" "udp" "$udp_port" "EasyTier UDP"
-	[ -n "$ws_port" ] && add_firewall_rule "easytier_ws" "tcp" "$ws_port" "EasyTier WS"
-	[ -n "$wss_port" ] && add_firewall_rule "easytier_wss" "tcp" "$wss_port" "EasyTier WSS"
-	[ -n "$wg_port" ] && add_firewall_rule "easytier_wg" "udp" "$wg_port" "EasyTier WG"
-	[ -n "$quic_port" ] && add_firewall_rule "easytier_quic" "tcp udp" "$quic_port" "EasyTier QUIC"
-	# 不再自动放行 SOCKS5 端口到 WAN —— 无认证 SOCKS5 代理暴露给公网有严重安全风险
-	# 如需恢复自动放行，去掉下面一行行首的 # 即可
-	# [ -n "$socks_port" ] && add_firewall_rule "easytier_socks5" "tcp" "$socks_port" "EasyTier SOCKS5"
+set_type() {
+	local package="$1" section="$2" type="$3"
+	[ "$(uci -q get "$package.$section")" = "$type" ] || uci set "$package.$section=$type"
 }
 
-# 设置网络接口
-# 参数: $1=接口名称 $2=IP地址(可选)
+migrate_router_input_policy() {
+	local section="$1" migration option legacy value
+	[ -n "$section" ] || section='@easytier[0]'
+	migration="$(uci -q get "easytier.$section.firewall_input_migration_version" 2>/dev/null || true)"
+	[ "$migration" = 1 ] && return 0
+
+	option="easytier.$section.allow_router_input"
+	if ! uci -q get "$option" >/dev/null 2>&1; then
+		legacy="$(uci -q get "easytier.$section.auto_config_firewall" 2>/dev/null || true)"
+		[ -n "$legacy" ] || legacy=1
+		[ "$legacy" = 1 ] && value=1 || value=0
+		uci set "$option=$value" || return 1
+	fi
+	uci set "easytier.$section.firewall_input_migration_version=1" || return 1
+	uci commit easytier
+}
+
+set_rule() {
+	local section="$1" protocol="$2" port="$3"
+	# 端口为空或不合法时清除旧规则，防止配置被移除后仍意外暴露服务。
+	case "$port" in ''|*[!0-9]*) uci -q delete "firewall.$section"; return 0 ;; esac
+	[ "${#port}" -le 5 ] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ] || {
+		uci -q delete "firewall.$section"
+		return 0
+	}
+	set_type firewall "$section" rule
+	set_option firewall "$section" name "$section"
+	set_option firewall "$section" target ACCEPT
+	set_option firewall "$section" src wan
+	set_option firewall "$section" proto "$protocol"
+	set_option firewall "$section" dest_port "$port"
+	set_option firewall "$section" enabled 1
+}
+
 setup_network_interface() {
-	local tunname="${1:-tun0}"
-	local ipaddr="$2"
-	
-	uci -q delete network.EasyTier >/dev/null 2>&1
-	
-	if [ -z "$(uci -q get network.EasyTier)" ]; then
-		uci set network.EasyTier='interface'
-		if [ -z "$ipaddr" ]; then
-			uci set network.EasyTier.proto='none'
-		else
-			uci set network.EasyTier.proto='static'
-			uci set network.EasyTier.ipaddr="$ipaddr"
-			uci set network.EasyTier.netmask='255.0.0.0'
-		fi
-		log_message "INFO" "easytier" "添加网络接口 EasyTier 绑定虚拟接口 ${tunname}" "/tmp/easytier.log"
-		uci set network.EasyTier.device="$tunname"
-		uci set network.EasyTier.ifname="$tunname"
+	local device="$1" address="$2" netmask="$3"
+	[ -n "$device" ] || device=tun0
+	set_type network EasyTier interface
+	set_option network EasyTier device "$device"
+	if [ -n "$address" ]; then
+		set_option network EasyTier proto static
+		set_option network EasyTier ipaddr "$address"
+		set_option network EasyTier netmask "${netmask:-255.0.0.0}"
+	else
+		set_option network EasyTier proto none
+		uci -q delete network.EasyTier.ipaddr
+		uci -q delete network.EasyTier.netmask
 	fi
+	uci -q delete network.EasyTier.ifname
 }
 
-# 设置防火墙区域
+# 规则名称固定带有 EasyTier 前缀，清理时只删除本插件创建和维护的 UCI 节。
 setup_firewall_zone() {
-	if [ -z "$(uci -q get firewall.easytierzone)" ]; then
-		log_message "INFO" "easytier" "添加防火墙规则，放行网络接口 EasyTier 允许出入转发，开启IP动态伪装 MSS钳制" "/tmp/easytier.log"
-		uci set firewall.easytierzone='zone'
-		uci set firewall.easytierzone.input='ACCEPT'
-		uci set firewall.easytierzone.output='ACCEPT'
-		uci set firewall.easytierzone.forward='ACCEPT'
-		uci set firewall.easytierzone.masq='1'
-		uci set firewall.easytierzone.mtu_fix='1'
-		uci set firewall.easytierzone.name='EasyTier'
-		uci set firewall.easytierzone.network='EasyTier'
-	fi
+	local allow_router_input="${1:-0}"
+	set_type firewall easytierzone zone
+	set_option firewall easytierzone name EasyTier
+	set_option firewall easytierzone network EasyTier
+	case "$allow_router_input" in
+	1) set_option firewall easytierzone input ACCEPT ;;
+	*) set_option firewall easytierzone input REJECT ;;
+	esac
+	set_option firewall easytierzone output ACCEPT
+	set_option firewall easytierzone forward ACCEPT
+	set_option firewall easytierzone masq 1
+	set_option firewall easytierzone mtu_fix 1
 }
 
-# 设置转发规则
-# 参数: $1=et_forward 配置值
 setup_forwarding_rules() {
-	local et_forward="$1"
-	
-	if [ "${et_forward#*etfwlan}" != "$et_forward" ]; then
-		log_message "INFO" "easytier" "允许从虚拟网络 EasyTier 到局域网 lan 的流量" "/tmp/easytier.log"
-		uci set firewall.easytierfwlan=forwarding
-		uci set firewall.easytierfwlan.dest='lan'
-		uci set firewall.easytierfwlan.src='EasyTier'
-	else
-		uci -q delete firewall.easytierfwlan
-	fi
-	
-	if [ "${et_forward#*etfwwan}" != "$et_forward" ]; then
-		log_message "INFO" "easytier" "允许从虚拟网络 EasyTier 到广域网 wan 的流量" "/tmp/easytier.log"
-		uci set firewall.easytierfwwan=forwarding
-		uci set firewall.easytierfwwan.dest='wan'
-		uci set firewall.easytierfwwan.src='EasyTier'
-	else
-		uci -q delete firewall.easytierfwwan
-	fi
-	
-	if [ "${et_forward#*lanfwet}" != "$et_forward" ]; then
-		log_message "INFO" "easytier" "允许从局域网 lan 到虚拟网络 EasyTier 的流量" "/tmp/easytier.log"
-		uci set firewall.lanfweasytier=forwarding
-		uci set firewall.lanfweasytier.dest='EasyTier'
-		uci set firewall.lanfweasytier.src='lan'
-	else
-		uci -q delete firewall.lanfweasytier
-	fi
-	
-	if [ "${et_forward#*wanfwet}" != "$et_forward" ]; then
-		log_message "INFO" "easytier" "允许从广域网 wan 到虚拟网络 EasyTier 的流量" "/tmp/easytier.log"
-		uci set firewall.wanfweasytier=forwarding
-		uci set firewall.wanfweasytier.dest='EasyTier'
-		uci set firewall.wanfweasytier.src='wan'
-	else
-		uci -q delete firewall.wanfweasytier
-	fi
+	local forwards="$1"
+	# 每个选项描述一个明确的源到目标方向，未选中的方向会移除对应转发节。
+	case "$forwards" in *etfwlan*)
+		set_type firewall easytierfwlan forwarding
+		set_option firewall easytierfwlan src EasyTier
+		set_option firewall easytierfwlan dest lan
+		;;
+	*) uci -q delete firewall.easytierfwlan ;;
+	esac
+	case "$forwards" in *etfwwan*)
+		set_type firewall easytierfwwan forwarding
+		set_option firewall easytierfwwan src EasyTier
+		set_option firewall easytierfwwan dest wan
+		;;
+	*) uci -q delete firewall.easytierfwwan ;;
+	esac
+	case "$forwards" in *lanfwet*)
+		set_type firewall lanfweasytier forwarding
+		set_option firewall lanfweasytier src lan
+		set_option firewall lanfweasytier dest EasyTier
+		;;
+	*) uci -q delete firewall.lanfweasytier ;;
+	esac
+	case "$forwards" in *wanfwet*)
+		set_type firewall wanfweasytier forwarding
+		set_option firewall wanfweasytier src wan
+		set_option firewall wanfweasytier dest EasyTier
+		;;
+	*) uci -q delete firewall.wanfweasytier ;;
+	esac
 }
 
-# 清理所有 EasyTier 防火墙规则
-clean_firewall_rules() {
-	uci -q delete network.EasyTier >/dev/null 2>&1
-	uci -q delete firewall.easytierzone >/dev/null 2>&1
-	uci -q delete firewall.easytierfwlan >/dev/null 2>&1
-	uci -q delete firewall.easytierfwwan >/dev/null 2>&1
-	uci -q delete firewall.lanfweasytier >/dev/null 2>&1
-	uci -q delete firewall.wanfweasytier >/dev/null 2>&1
-	uci -q delete firewall.easytier_tcp >/dev/null 2>&1
-	uci -q delete firewall.easytier_udp >/dev/null 2>&1
-	uci -q delete firewall.easytier_tcp_udp >/dev/null 2>&1
-	uci -q delete firewall.easytier_wss >/dev/null 2>&1
-	uci -q delete firewall.easytier_ws >/dev/null 2>&1
-	uci -q delete firewall.easytier_wg >/dev/null 2>&1
-	uci -q delete firewall.easytier_quic >/dev/null 2>&1
-	uci -q delete firewall.easytier_wireguard >/dev/null 2>&1
-	uci -q delete firewall.easytier_socks5 >/dev/null 2>&1
-	uci -q delete firewall.easytier_webserver >/dev/null 2>&1
-	uci -q delete firewall.easytier_webapi >/dev/null 2>&1
-	uci -q delete firewall.easytier_webhtml >/dev/null 2>&1
+set_firewall_rules() {
+	set_rule easytier_tcp_udp 'tcp udp' "$1"
+	set_rule easytier_udp udp "$2"
+	set_rule easytier_ws tcp "$3"
+	set_rule easytier_wss tcp "$4"
+	set_rule easytier_wg udp "$5"
+	set_rule easytier_quic 'tcp udp' "$6"
 }
 
-# 设置 Web 控制台防火墙规则
-# 参数: $1=web_port $2=api_port $3=html_port $4=fw_web $5=fw_api
-setup_web_firewall() {
-	local web_port="$1"
-	local api_port="$2"
-	local html_port="$3"
-	local fw_web="$4"
-	local fw_api="$5"
-	
-	if [ -n "$web_port" ] && [ "$fw_web" = "1" ]; then
-		log_message "INFO" "easytier" "添加防火墙规则 easytier_web 放行服务端口 ${web_port}" "/tmp/easytierweb.log"
-		uci -q delete firewall.easytier_webserver
-		uci set firewall.easytier_webserver=rule
-		uci set firewall.easytier_webserver.name="easytier_webserver"
-		uci set firewall.easytier_webserver.target="ACCEPT"
-		uci set firewall.easytier_webserver.src="wan"
-		uci set firewall.easytier_webserver.proto="tcp udp"
-		uci set firewall.easytier_webserver.dest_port="$web_port"
-		uci set firewall.easytier_webserver.enabled="1"
-	fi
-	
-	if [ -n "$api_port" ] && [ "$fw_api" = "1" ]; then
-		log_message "INFO" "easytier" "添加防火墙规则 easytier_web 放行API端口 ${api_port}" "/tmp/easytierweb.log"
-		uci -q delete firewall.easytier_webapi
-		uci set firewall.easytier_webapi=rule
-		uci set firewall.easytier_webapi.name="easytier_webapi"
-		uci set firewall.easytier_webapi.target="ACCEPT"
-		uci set firewall.easytier_webapi.src="wan"
-		uci set firewall.easytier_webapi.proto="tcp"
-		uci set firewall.easytier_webapi.dest_port="$api_port"
-		uci set firewall.easytier_webapi.enabled="1"
-	fi
-	
-	if [ -n "$html_port" ] && [ "$fw_api" = "1" ] && [ "$html_port" != "$api_port" ]; then
-		log_message "INFO" "easytier" "添加防火墙规则 easytier_web 放行html端口 ${html_port}" "/tmp/easytierweb.log"
+set_web_firewall() {
+	local web_port="$1" api_port="$2" html_port="$3" allow_web="$4" allow_api="$5"
+	[ "$allow_web" = 1 ] && set_rule easytier_webserver 'tcp udp' "$web_port" || uci -q delete firewall.easytier_webserver
+	[ "$allow_api" = 1 ] && set_rule easytier_webapi tcp "$api_port" || uci -q delete firewall.easytier_webapi
+	if [ "$allow_api" = 1 ] && [ "$html_port" != "$api_port" ]; then
+		set_rule easytier_webhtml tcp "$html_port"
+	else
 		uci -q delete firewall.easytier_webhtml
-		uci set firewall.easytier_webhtml=rule
-		uci set firewall.easytier_webhtml.name="easytier_webhtml"
-		uci set firewall.easytier_webhtml.target="ACCEPT"
-		uci set firewall.easytier_webhtml.src="wan"
-		uci set firewall.easytier_webhtml.proto="tcp"
-		uci set firewall.easytier_webhtml.dest_port="$html_port"
-		uci set firewall.easytier_webhtml.enabled="1"
 	fi
 }
 
-# 应用防火墙和网络配置更改（延迟后台执行）
-apply_network_changes() {
-	if [ -n "$(uci changes network)" ] || [ -n "$(uci changes firewall)" ]; then
+cleanup_web_firewall() {
+	uci -q delete firewall.easytier_webserver
+	uci -q delete firewall.easytier_webapi
+	uci -q delete firewall.easytier_webhtml
+}
+
+cleanup_core_interface() {
+	uci -q delete network.EasyTier
+}
+
+cleanup_core_firewall_rules() {
+	uci -q delete firewall.easytierzone
+	uci -q delete firewall.easytierfwlan
+	uci -q delete firewall.easytierfwwan
+	uci -q delete firewall.lanfweasytier
+	uci -q delete firewall.wanfweasytier
+	uci -q delete firewall.easytier_tcp_udp
+	uci -q delete firewall.easytier_udp
+	uci -q delete firewall.easytier_ws
+	uci -q delete firewall.easytier_wss
+	uci -q delete firewall.easytier_wg
+	uci -q delete firewall.easytier_quic
+	uci -q delete firewall.easytier_tcp
+	uci -q delete firewall.easytier_wireguard
+	uci -q delete firewall.easytier_socks5
+}
+
+setup_firewall_policy() {
+	local manage="$1" allow_router_input="$2" forwards="$3"
+	if [ "$manage" = 1 ]; then
+		setup_firewall_zone "$allow_router_input"
+		setup_forwarding_rules "$forwards"
+	else
+		cleanup_core_firewall_rules
+	fi
+}
+
+commit_firewall_changes() {
+	local network_changed=0 firewall_changed=0
+	[ -z "$(uci changes network)" ] || { uci commit network && network_changed=1; }
+	[ -z "$(uci changes firewall)" ] || { uci commit firewall && firewall_changed=1; }
+	if [ "$network_changed" = 1 ] || [ "$firewall_changed" = 1 ]; then
+		# 等待 procd 完成本次启动后再重载网络和防火墙，避免同步重载打断启动流程。
 		(
 			sleep 5
-			LOCK_FILE="/var/lock/easytier_reload.lock"
-			if [ ! -f "$LOCK_FILE" ]; then
-				touch "$LOCK_FILE"
-				[ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
-				[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
-				rm -f "$LOCK_FILE"
-			fi
-		) &
+			[ "$network_changed" = 0 ] || /etc/init.d/network reload >/dev/null 2>&1
+			[ "$firewall_changed" = 0 ] || /etc/init.d/firewall reload >/dev/null 2>&1
+		) >/dev/null 2>&1 &
 	fi
 }

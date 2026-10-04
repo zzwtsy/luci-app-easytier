@@ -1,259 +1,97 @@
-![luci-app-easytier](https://socialify.git.ci/EasyTier/luci-app-easytier/image?custom_description=EasyTier+Installation+Packages+%28IPK+and+APK%29+for+OpenWrt&description=1&font=JetBrains+Mono&forks=1&issues=1&logo=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F169161851%3Fs%3D200%26v%3D4&name=1&pulls=1&stargazers=1&theme=Auto)
+# luci-app-easytier
 
 English | [简体中文](README.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![OpenWrt](https://img.shields.io/badge/OpenWrt-18.06--26.x-orange.svg)](https://openwrt.org)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/EasyTier/luci-app-easytier)
+[![OpenWrt](https://img.shields.io/badge/OpenWrt-24.10%2B-orange.svg)](https://openwrt.org)
 
-OpenWrt LuCI web interface for managing [EasyTier](https://github.com/EasyTier/EasyTier) - a simple, secure, and decentralized VPN networking solution.
+A LuCI application for configuring and managing [EasyTier](https://github.com/EasyTier/EasyTier) on OpenWrt.
 
-## ✨ Features
+## Supported platforms
 
-- 🎨 Modern UI design with automatic light/dark theme switching
-- 📱 Perfect adaptation for mobile and desktop devices
-- 🌍 Full Chinese/English internationalization support
-- 📊 Real-time traffic monitoring and network interface status display
-- 🔄 Real-time performance metrics and version information
-- 📦 Support for compressed packages and binary file uploads
-- 🔧 Flexible configuration management with backup and restore
+- OpenWrt 24.10, 25.12, and later, including Snapshot.
+- OpenWrt architectures for which EasyTier publishes Linux binaries: ARM, AArch64, MIPS, MIPSel, and x86_64. Check the build output for the exact target architecture.
+- LuCI JavaScript views, rpcd ACLs, and procd service management. Legacy LuCI Lua pages are not supported.
 
-## 📋 Compatibility
+## Install
 
-### OpenWrt Versions
-- ✅ OpenWrt 18.06 / 18.08
-- ✅ OpenWrt 19.x ~ 26.x
-- ✅ Support for IPK (22.03.x) and APK (SNAPSHOT) package formats
+Download the package matching your device architecture and OpenWrt release from Releases. OpenWrt 24.10 uses IPK; OpenWrt 25.12 and later use APK. Install one core package with the LuCI application:
 
-### Architecture Support
-- ARM: aarch64, armv7, arm
-- MIPS: mips, mipsel
-- x86: x86_64
+OpenWrt 24.10:
 
-## 🚀 Quick Start
-
-### Method 1: Using Pre-compiled Packages
-
-1. Download the package for your architecture from [Releases](https://github.com/EasyTier/luci-app-easytier/releases)
-2. Upload to OpenWrt's `/tmp` directory
-3. Install:
-
-```bash
-# IPK package (OpenWrt 22.03.x)
-opkg install /tmp/luci-app-easytier_*.ipk
-
-# APK package (OpenWrt SNAPSHOT)
-apk add --allow-untrusted /tmp/luci-app-easytier_*.apk
+```sh
+opkg install /tmp/easytier_*.ipk /tmp/luci-app-easytier_*.ipk
 ```
 
-4. Refresh your browser or re-login to LuCI interface
-5. Upload EasyTier binary in **VPN → EasyTier**
+OpenWrt 25.12 and later:
 
-### Method 2: GitHub Actions Auto-build
-
-1. Fork this repository
-2. Modify the architecture list in `.github/workflows/build.yml` (optional)
-3. Go to Actions page and manually trigger the `Build-OpenWrt-EasyTier` workflow
-4. Enter version number (e.g., `v1.0.0`) and release notes
-5. Wait for compilation to complete and download from Releases
-
-<img width="2727" height="866" alt="image" src="https://github.com/user-attachments/assets/24a55d1c-7937-4cef-87f8-cd8778b5f009" />
-
-### Method 3: Local Compilation
-
-```bash
-# 1. Download OpenWrt SDK
-wget https://downloads.openwrt.org/releases/22.03.7/targets/rockchip/armv8/openwrt-sdk-22.03.7-rockchip-armv8_gcc-11.2.0_musl.Linux-x86_64.tar.xz
-tar -xJf openwrt-sdk-*.tar.xz
-cd openwrt-sdk-*/
-
-# 2. Clone the repository
-git clone https://github.com/EasyTier/luci-app-easytier.git package/luci-app-easytier
-
-# 3. Update feeds and configure
-./scripts/feeds update -a
-./scripts/feeds install -a
-make defconfig
-
-# 4. Compile
-make package/luci-app-easytier/compile V=s
-
-# 5. Find the generated ipk
-find bin/ -name "luci-app-easytier*.ipk"
+```sh
+apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk
 ```
 
-## 📦 Dependencies
+`easytier` includes `easytier-core`, `easytier-cli`, and the embedded Web Console binary where supported by the architecture. Use `easytier-noweb` instead on storage-constrained devices or when the embedded Web Console is not needed. The two core packages conflict and cannot be installed together.
 
-- `kmod-tun` - TUN/TAP kernel module (required)
-- `luci-compat` - LuCI compatibility layer
+You can install only `luci-app-easytier` and upload a custom build from the program management section of **VPN → EasyTier → Overview**. The plugin does not download binaries on the device during boot or service startup.
 
-Ensure `kmod-tun` is installed before installation:
-```bash
+### Install from the GitHub Pages package feed
+
+Signed feed packages are built for matching OpenWrt 24.10.8 and 25.12.5 SDKs. Each SDK and architecture feed keeps the current EasyTier packages; older versions remain available from Releases. Use the package architecture for your device. On 24.10, check it with `opkg print-architecture`; on 25.12 and later, use `apk --print-arch`. For Snapshot and other point releases, use the matching package archive from Releases.
+
+OpenWrt 24.10.8:
+
+```sh
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+ARCH=x86_64 # replace with your device architecture
+wget -O /tmp/easytier-opkg.pub "$FEED_BASE/keys/easytier-opkg.pub"
+opkg-key add /tmp/easytier-opkg.pub
+echo "src/gz easytier $FEED_BASE/feeds/24.10.8/$ARCH/packages_ci" >> /etc/opkg/customfeeds.conf
 opkg update
-opkg install kmod-tun
+opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-## 🔧 Usage
+OpenWrt 25.12.5:
 
-### Initial Configuration
-
-1. After installing the plugin, navigate to **VPN → EasyTier**
-2. Upload EasyTier binary files on the **Upload Program** page, or directly install the ipk/apk package containing the core (easytier.ipk / easytier.apk)
-   - Supports single files: `easytier-core`, `easytier-cli`, `easytier-web-embed`
-   - Supports compressed packages: `.zip`, `.tar.gz`, `.tar`
-3. Configure network parameters on the **EasyTier Core** page
-4. Enable and save the configuration
-
-### Configuration Methods
-
-Two configuration methods are supported:
-
-1. **Command-line parameters**: Configure parameters through the LuCI interface
-2. **Configuration file**: Use the `/etc/easytier/config.toml` configuration file
-
-### Function Pages
-
-- **Status** - View running status, version info, connection info, and real-time traffic
-- **EasyTier Core** - Configure core parameters (network name, secret key, nodes, etc.)
-- **Self-hosted Console** - Configure easytier-web console
-- **Logs** - View running logs with level filtering support
-- **Upload Program** - Upload and manage EasyTier binary files
-
-## 🛠️ Development Guide
-
-### Tech Stack
-
-- **Backend**: Lua 5.1 (LuCI legacy architecture)
-- **Frontend**: HTML + CSS + ES5 JavaScript
-- **Rendering**: Server-side rendering (SSR)
-- **Internationalization**: LuCI native i18n (.po files)
-
-### Development Requirements
-
-#### Compatibility Principles
-- ✅ Must be compatible with OpenWrt 18.06 ~ 26.x
-- ✅ Use LuCI Lua1 architecture (also compatible with Lua2)
-- ❌ Do not use LuCI JS framework (view.js/form.js/rpc.js)
-- ❌ Do not use ES6+ syntax (let/const/arrow functions/fetch)
-
-#### Frontend Standards
-```javascript
-// ✅ Allowed
-var xhr = new XMLHttpRequest();
-function handleClick() { }
-document.getElementById('id');
-
-// ❌ Forbidden
-const data = await fetch('/api');
-let result = () => {};
-import module from 'module';
+```sh
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+ARCH=x86_64 # replace with your device architecture
+mkdir -p /etc/apk/keys
+wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
+echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
+apk update
+apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-#### Backend Standards
-```lua
--- ✅ Use Lua1 API
-local http = require "luci.http"
-local uci = require "luci.model.uci".cursor()
-http.write_json({success = true})
+For storage-constrained devices or when the embedded Web Console is not needed, replace `easytier` with `easytier-noweb`. The two core packages conflict. Update feed-installed packages with the corresponding package manager. Manual upload is for custom builds and custom binary paths.
 
--- ❌ Do not use Lua2-specific syntax
--- Do not use new LuCI JS API
+## Features
+
+- Configure EasyTier CLI options through UCI forms or edit the TOML configuration file.
+- Start, stop, and supervise EasyTier Core and the Web Console with procd.
+- Optionally monitor configured IPv4 targets and restart EasyTier Core when all targets are unreachable.
+- View service state, versions, memory use, TUN interface details, connection information, and system logs.
+- Manage the EasyTier network interface, firewall rules, and forwarding rules from UCI settings.
+- Upload EasyTier ELF binaries or ZIP, TAR, TAR.GZ, and TGZ archives. Uploads are limited to 100 MiB; archive entries, ELF format, and EasyTier version output are checked before installation.
+- Configure the Web Console, OpenID Connect, webhooks, and database path.
+
+Plugin settings are stored in `/etc/config/easytier`; the TOML file is stored in `/etc/easytier/config.toml`. The LuCI menu is **VPN → EasyTier**.
+
+## Build from source
+
+Add this repository as an OpenWrt feed:
+
+```sh
+echo "src-link easytier /path/to/luci-app-easytier" >> feeds.conf
+./scripts/feeds update easytier
+./scripts/feeds install -a -p easytier
+make menuconfig
+make package/feeds/easytier/easytier/compile V=s
+make package/feeds/easytier/luci-app-easytier/compile V=s
 ```
 
-#### Internationalization
-```lua
--- In Lua
-local translate = i18n.translate
-translate("Text to translate")
+Replace `easytier` with `easytier-noweb` if needed. Core packages fetch a pinned EasyTier GitHub Release asset and verify its SHA256 during the build. For a custom EasyTier version, set `EASYTIER_VERSION` and provide the corresponding asset SHA256 with `EASYTIER_HASH`.
 
--- In HTM templates
-<%:Text to translate%>
+See the [development guide](DEVELOPMENT_EN.md) for implementation and validation details. GitHub Actions builds packages for OpenWrt 24.10, 25.12, and Snapshot.
 
--- In JavaScript (injected by Lua)
-var msg = '<%=translate("Text")%>';
-```
-
-### Directory Structure
-
-```
-luci-app-easytier/
-├── luasrc/
-│   ├── controller/
-│   │   └── easytier.lua          # Routes and API controller
-│   ├── model/cbi/
-│   │   ├── easytier.lua          # Configuration page
-│   │   └── easytier_status.lua   # Status page
-│   └── view/easytier/
-│       ├── easytier_status.htm   # Status page template
-│       ├── easytier_log.htm      # Log page
-│       ├── easytier_upload.htm   # Upload page
-│       └── ...
-├── root/
-│   ├── etc/
-│   │   ├── config/easytier       # UCI config file
-│   │   ├── init.d/easytier       # Init script
-│   │   └── easytier/             # Config directory
-│   └── usr/share/easytier/
-│       └── download.sh           # Download script
-├── po/
-│   ├── zh_Hans/easytier.po       # Simplified Chinese translation
-│   └── templates/easytier.pot    # Translation template
-└── Makefile                      # OpenWrt package definition
-```
-
-### API Design Standards
-
-```lua
--- API path format
-entry({"admin", "vpn", "easytier", "api_name"}, call("function_name")).leaf = true
-
--- Return JSON format
-function api_name()
-    luci.http.prepare_content("application/json")
-    luci.http.write_json({
-        success = true,
-        data = {},
-        message = "Success"
-    })
-end
-```
-
-### Contributing Code
-
-1. Fork the project and create a branch
-2. Ensure code complies with development standards
-3. Test compatibility on OpenWrt 18.06 and the latest version
-4. Submit a Pull Request
-
-## 🐛 Troubleshooting
-
-### Interface Not Showing After Installation
-```bash
-# Clear LuCI cache
-rm -rf /tmp/luci-*
-# Re-login to LuCI interface
-```
-
-### util.pcdata Warning
-```bash
-sed -i 's/util.pcdata/xml.pcdata/g' /usr/lib/lua/luci/model/cbi/easytier.lua
-```
-
-### Configuration File Conflict
-When upgrading, if a configuration file conflict is prompted, the old configuration will be retained and the new configuration saved as `/etc/config/easytier-opkg`. You can ignore this error.
-
-## 📄 License
+## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
-
-## 🔗 Related Links
-
-- [EasyTier Official Repository](https://github.com/EasyTier/EasyTier)
-- [EasyTier Official Documentation](https://easytier.cn)
-- [OpenWrt Official Website](https://openwrt.org)
-
-## 🤝 Contributing
-
-Issues and Pull Requests are welcome!
-
----

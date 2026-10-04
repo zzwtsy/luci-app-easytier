@@ -1,0 +1,311 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+
+UPLOAD=/tmp/easytier-upload
+# 上传体积在前端和设备端都会检查；设备端限制才是实际安装边界。
+MAX_UPLOAD_SIZE=104857600
+WORKDIR=
+INSTALL_COMMITTED=0
+TRANSACTION_FINISHED=0
+
+error() {
+	# LuCI 通过 JSON 读取结果，统一错误格式便于页面显示且避免解析 shell 文本。
+	json_init
+	json_add_boolean success 0
+	json_add_string message "$1"
+	json_dump
+	exit 1
+}
+
+success() {
+	json_init
+	json_add_boolean success 1
+	json_add_string message "$1"
+	json_dump
+}
+
+config_value() {
+	uci -q get "easytier.@easytier[0].$1"
+}
+
+clear_logs() {
+	local path temporary
+	for path in /tmp/easytier.log /tmp/easytierweb.log; do
+		temporary="$(mktemp /tmp/.easytier-log.XXXXXX)" || error "Unable to create a temporary log file"
+		chmod 0600 "$temporary" || { rm -f -- "$temporary"; error "Unable to secure the temporary log file"; }
+		mv -f -- "$temporary" "$path" || { rm -f -- "$temporary"; error "Unable to replace a legacy log file"; }
+	done
+	success "Legacy EasyTier log files cleared"
+}
+
+reset_database() {
+	local path parent base current web_bin process_name
+	path="$(config_value web_db_path)"
+	[ -n "$path" ] || path=/etc/easytier/et.db
+	# 仅允许删除插件数据目录内的数据库，并逐级拒绝符号链接以限制路径逃逸。
+	case "$path" in
+		/etc/easytier/*|/var/lib/easytier/*) ;;
+		*) error "Database path must be inside /etc/easytier or /var/lib/easytier" ;;
+	esac
+	case "$path" in *..*|*[!A-Za-z0-9_./-]*) error "Invalid database path" ;; esac
+	parent="$(dirname "$path")"
+	case "$parent" in
+		/etc/easytier|/etc/easytier/*) base=/etc/easytier ;;
+		/var/lib/easytier|/var/lib/easytier/*) base=/var/lib/easytier ;;
+		*) error "Database parent directory is outside the allowed locations" ;;
+	esac
+	current="$parent"
+	while [ "$current" != "$base" ]; do
+		[ ! -L "$current" ] || error "Database path must not traverse a symlinked directory"
+		current="${current%/*}"
+	done
+	[ ! -L "$base" ] || error "Database path must not use a symlinked directory"
+	[ -f "$path" ] || error "Database file does not exist"
+	[ ! -L "$path" ] || error "Database path must not be a symlink"
+	web_bin="$(config_value webbin)"
+	[ -n "$web_bin" ] || web_bin=/usr/bin/easytier-web
+	process_name="${web_bin##*/}"
+	case "$process_name" in ''|-*|*[!A-Za-z0-9_.+-]*) error "Invalid Web binary path" ;; esac
+	# 数据库可能仍被 Web 服务打开；先确认对应进程停止，再删除数据库及 WAL 文件。
+	if pidof "$process_name" >/dev/null 2>&1; then
+		error "Stop EasyTier Web before resetting its database"
+	fi
+	rm -f -- "$path" "$path-wal" "$path-shm" || error "Unable to remove database files"
+	success "Database files removed"
+}
+
+valid_binary() {
+	local path="$1" magic output
+	# 先检查 ELF 文件头，再在超时保护下核对版本输出，避免把任意上传文件安装为程序。
+	magic="$(dd if="$path" bs=4 count=1 2>/dev/null | od -An -tx1 | tr -d ' \n')"
+	[ "$magic" = 7f454c46 ] || return 1
+	command -v timeout >/dev/null 2>&1 || return 1
+	output="$(timeout 10 "$path" -V 2>&1)" || return 1
+	printf '%s' "$output" | grep -qi easytier
+}
+
+check_upload() {
+	local size
+	# 上传临时文件必须是普通文件且不能是符号链接，大小由服务端重新读取确认。
+	[ -f "$UPLOAD" ] && [ ! -L "$UPLOAD" ] || error "No uploaded file was found"
+	size="$(wc -c <"$UPLOAD" 2>/dev/null)"
+	case "$size" in ''|*[!0-9]*) error "Unable to read the uploaded file size" ;; esac
+	[ "$size" -gt 0 ] && [ "$size" -le "$MAX_UPLOAD_SIZE" ] || error "Uploaded file must be between 1 byte and 100 MiB"
+}
+
+destination_for() {
+	local name="$1" core_dir
+	# 只接受三个已知产物名；CLI 与 Core 放在同一目录，其他名字不能选择任意目标路径。
+	case "$name" in
+		easytier-core)
+			DESTINATION="$(config_value easytierbin)"
+			[ -n "$DESTINATION" ] || DESTINATION=/usr/bin/easytier-core
+			;;
+		easytier-cli)
+			core_dir="$(dirname "$(config_value easytierbin)")"
+			[ "$core_dir" != . ] || core_dir=/usr/bin
+			DESTINATION="$core_dir/easytier-cli"
+			;;
+		easytier-web-embed)
+			DESTINATION="$(config_value webbin)"
+			[ -n "$DESTINATION" ] || DESTINATION=/usr/bin/easytier-web
+			;;
+		*) return 1 ;;
+	esac
+	case "$DESTINATION" in
+		/*) ;;
+		*) return 1 ;;
+	esac
+	case "$DESTINATION" in *..*|*[!A-Za-z0-9_./-]*) return 1 ;; esac
+}
+
+stage_binary() {
+	local source="$1" name="$2" directory temporary
+	destination_for "$name" || return 1
+	directory="$(dirname "$DESTINATION")"
+	[ -d "$directory" ] && [ -w "$directory" ] || return 1
+	[ ! -d "$DESTINATION" ] || return 1
+	if grep -F -x "$DESTINATION" "$WORKDIR/staged-destinations" >/dev/null 2>&1; then
+		return 1
+	fi
+	# 在目标目录内暂存，校验成功后才能原子替换目标文件。
+	temporary="$(mktemp "$directory/.easytier-install.XXXXXX")" || return 1
+	if ! cp "$source" "$temporary" || ! chmod 0755 "$temporary" || ! valid_binary "$temporary"; then
+		rm -f -- "$temporary"
+		return 1
+	fi
+	printf '%s\n' "$DESTINATION" >>"$WORKDIR/staged-destinations" || {
+		rm -f -- "$temporary"
+		return 1
+	}
+	printf '%s|%s\n' "$DESTINATION" "$temporary" >>"$WORKDIR/staged-files" || {
+		rm -f -- "$temporary"
+		return 1
+	}
+}
+
+cleanup_install() {
+	local destination temporary backup had_old
+	if [ -n "$WORKDIR" ] && [ -d "$WORKDIR" ]; then
+		if [ "$INSTALL_COMMITTED" != 1 ] && [ "$TRANSACTION_FINISHED" != 1 ] && [ -f "$WORKDIR/transaction" ] && [ -s "$WORKDIR/transaction" ]; then
+			rollback_install
+		fi
+		if [ -f "$WORKDIR/staged-files" ]; then
+			while IFS='|' read -r destination temporary; do
+				[ -n "$temporary" ] && rm -f -- "$temporary"
+			done <"$WORKDIR/staged-files"
+		fi
+		rm -rf "$WORKDIR"
+	fi
+	rm -f -- "$UPLOAD"
+}
+
+rollback_install() {
+	local destination temporary backup had_old
+	# 安装任一步失败时删除已放入的新文件，并把事务日志记录的旧文件恢复原位。
+	if [ -f "$WORKDIR/installed-files" ]; then
+		while IFS= read -r destination; do
+			[ -n "$destination" ] && rm -f -- "$destination"
+		done <"$WORKDIR/installed-files"
+	fi
+	if [ -f "$WORKDIR/transaction" ]; then
+		while IFS='|' read -r destination temporary backup had_old; do
+			[ -n "$temporary" ] && rm -f -- "$temporary"
+			if [ "$had_old" = 1 ] && { [ -e "$backup" ] || [ -L "$backup" ]; }; then
+				mv -f -- "$backup" "$destination"
+			fi
+		done <"$WORKDIR/transaction"
+	fi
+	TRANSACTION_FINISHED=1
+}
+
+commit_staged() {
+	local destination temporary backup had_old
+	# 先记录每个目标的旧状态并备份旧文件，再逐个放入新文件；失败时统一回滚。
+	: >"$WORKDIR/transaction"
+	: >"$WORKDIR/installed-files"
+	while IFS='|' read -r destination temporary; do
+		[ -n "$destination" ] || continue
+		backup="$destination.easytier-backup-$$"
+		[ ! -e "$backup" ] && [ ! -L "$backup" ] || { rollback_install; return 1; }
+		had_old=0
+		if [ -e "$destination" ] || [ -L "$destination" ]; then
+			[ ! -d "$destination" ] || { rollback_install; return 1; }
+			had_old=1
+		fi
+		printf '%s|%s|%s|%s\n' "$destination" "$temporary" "$backup" "$had_old" >>"$WORKDIR/transaction" || {
+			rollback_install
+			return 1
+		}
+		if [ "$had_old" = 1 ]; then
+			mv -- "$destination" "$backup" || { rollback_install; return 1; }
+		fi
+	done <"$WORKDIR/staged-files"
+
+	while IFS='|' read -r destination temporary backup had_old; do
+		[ -n "$destination" ] || continue
+		printf '%s\n' "$destination" >>"$WORKDIR/installed-files" || {
+			rollback_install
+			return 1
+		}
+		mv -- "$temporary" "$destination" || { rollback_install; return 1; }
+	done <"$WORKDIR/transaction"
+
+	while IFS='|' read -r destination temporary backup had_old; do
+		[ "$had_old" = 1 ] && rm -f -- "$backup"
+	done <"$WORKDIR/transaction"
+	INSTALL_COMMITTED=1
+	TRANSACTION_FINISHED=1
+	return 0
+}
+
+safe_archive_entries() {
+	local entry
+	# 在调用解压器前拒绝绝对路径、父目录跳转和不支持的成员名字符。
+	while IFS= read -r entry; do
+		[ -n "$entry" ] || continue
+		case "$entry" in
+			/*|*[!A-Za-z0-9._/-]*) return 1 ;;
+		esac
+		case "/$entry/" in */../*) return 1 ;; esac
+	done
+}
+
+install_archive() {
+	local archive_name="$1" list entry member name found=0
+	WORKDIR="$(mktemp -d /tmp/easytier-install.XXXXXX)" || return 1
+	: >"$WORKDIR/staged-files"
+	: >"$WORKDIR/staged-destinations"
+	# 先列出并检查归档目录，再只提取名称匹配的 EasyTier 二进制到临时目录。
+	case "$archive_name" in
+		*.zip)
+			command -v unzip >/dev/null 2>&1 || return 1
+			list="$(unzip -Z1 "$UPLOAD" 2>/dev/null)" || return 1
+			printf '%s\n' "$list" | safe_archive_entries || return 1
+			;;
+		*.tar.gz|*.tgz)
+			list="$(tar -tzf "$UPLOAD" 2>/dev/null)" || return 1
+			printf '%s\n' "$list" | safe_archive_entries || return 1
+			;;
+		*.tar)
+			list="$(tar -tf "$UPLOAD" 2>/dev/null)" || return 1
+			printf '%s\n' "$list" | safe_archive_entries || return 1
+			;;
+		*) return 1 ;;
+	esac
+	ulimit -f 204800 2>/dev/null || true
+
+	for name in easytier-core easytier-cli easytier-web-embed; do
+		member=""
+		while IFS= read -r entry; do
+			[ "${entry##*/}" = "$name" ] || continue
+			[ -z "$member" ] || return 1
+			member="$entry"
+		done <<EOF
+$list
+EOF
+		[ -n "$member" ] || continue
+		case "$archive_name" in
+			*.zip) unzip -p "$UPLOAD" "$member" >"$WORKDIR/$name" 2>/dev/null ;;
+			*.tar.gz|*.tgz) tar -xOzf "$UPLOAD" "$member" >"$WORKDIR/$name" 2>/dev/null ;;
+			*.tar) tar -xOf "$UPLOAD" "$member" >"$WORKDIR/$name" 2>/dev/null ;;
+		esac
+		[ -s "$WORKDIR/$name" ] && [ "$(wc -c <"$WORKDIR/$name")" -le "$MAX_UPLOAD_SIZE" ] || {
+			return 1
+		}
+		stage_binary "$WORKDIR/$name" "$name" || return 1
+		found=$((found + 1))
+	done
+	[ "$found" -gt 0 ] || return 1
+	commit_staged
+}
+
+install_upload() {
+	local name="$1" result
+	# 退出时统一清理上传文件和暂存目录；安装失败的 trap 会先尝试恢复事务。
+	trap 'cleanup_install' EXIT
+	check_upload
+	case "$name" in
+		easytier-core|easytier-cli|easytier-web-embed)
+			WORKDIR="$(mktemp -d /tmp/easytier-install.XXXXXX)" || error "Unable to create a temporary directory"
+			: >"$WORKDIR/staged-files"
+			: >"$WORKDIR/staged-destinations"
+			stage_binary "$UPLOAD" "$name" || error "Binary validation or staging failed"
+			commit_staged || error "Installation failed; previous files were restored"
+			;;
+		*.zip|*.tar.gz|*.tgz|*.tar)
+			install_archive "$name" || error "Archive is invalid or contains no valid EasyTier binary"
+			;;
+		*) error "Unsupported upload file" ;;
+	esac
+	success "EasyTier program installed. Restart the service to apply the change."
+}
+
+# 写操作只开放 ACL 中声明的管理动作；这里仍逐项校验，拒绝未识别的操作名。
+case "$1" in
+	clear-logs) clear_logs ;;
+	reset-database) reset_database ;;
+	install-upload) install_upload "$2" ;;
+	*) error "Unknown operation" ;;
+esac
