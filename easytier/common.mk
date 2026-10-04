@@ -96,4 +96,3 @@ endif
 endif
 endef
 
-$(eval $(call BuildPackage,$(PKG_NAME)))

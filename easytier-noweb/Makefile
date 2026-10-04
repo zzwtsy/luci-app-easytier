@@ -12,3 +12,5 @@ EASYTIER_HAS_WEB:=0
 EASYTIER_CONFLICTS:=easytier
 
 include $(EASYTIER_PACKAGE_DIR)../easytier/common.mk
+
+$(eval $(call BuildPackage,$(PKG_NAME)))
