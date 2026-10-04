@@ -14,6 +14,8 @@ PKG_NAME:=luci-app-easytier
 PKG_VERSION:=$(or $(LUCI_APP_VERSION),3.0.0)
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
+# Keep the translation package version aligned with this LuCI package release.
+PKG_PO_VERSION:=$(PKG_VERSION)
 
 LUCI_TITLE:=LuCI support for EasyTier
 LUCI_DEPENDS:=+luci-base +kmod-tun +unzip

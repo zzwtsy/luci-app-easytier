@@ -47,8 +47,40 @@ jobs:
       - name: Test firewall configuration
         run: tests/firewall.sh
 
+  build-smoke:
+    name: Build smoke x86_64-${{ matrix.sdk }}
+    needs: checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        sdk:
+          - 24.10.8
+          - 25.12.5
+          - SNAPSHOT
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - name: Build packages with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
+        env:
+          ARCH: x86_64-${{ matrix.sdk }}
+          FEEDNAME: packages_ci
+          # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
+          PACKAGES: easytier easytier-noweb luci-app-easytier
+          NO_REFRESH_CHECK: 1
+          V: s
+      - name: Verify package outputs
+        env:
+          PACKAGE_DIR: bin/packages/x86_64/packages_ci
+          BUILD_TARGET: x86_64-${{ matrix.sdk }}
+          SDK: ${{ matrix.sdk }}
+        run: .github/scripts/prepare-package-artifacts.sh
+
   build:
     name: Build ${{ matrix.arch }}-${{ matrix.sdk }}
+    needs: build-smoke
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -61,7 +93,6 @@ jobs:
           - arm_cortex-a7_neon-vfpv4
           - mips_24kc
           - mipsel_24kc
-          - x86_64
         sdk:
           - 24.10.8
           - 25.12.5
