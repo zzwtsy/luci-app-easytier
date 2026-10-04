@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: luci-app-easytier 2.6.4\n"
+"Project-Id-Version: luci-app-easytier 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-26 17:23-0700\n"
 "PO-Revision-Date: 2026-09-26 15:41-0700\n"

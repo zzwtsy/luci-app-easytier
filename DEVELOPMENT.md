@@ -35,8 +35,9 @@ root/usr/share/easytier/firewall.sh            UCI 网络和防火墙管理
 
 `easytier/Makefile` 与 `easytier-noweb/Makefile` 共用 `easytier/common.mk`。包使用 OpenWrt 的下载和校验流程，资产名采用上游 Release 命名 `easytier-linux-<arch>-v<version>.zip`。
 
-- 默认版本和各架构 SHA256 保存在 `easytier/common.mk` 与 `version.mk`。
-- 自定义版本必须同时设置 `EASYTIER_VERSION` 和该资产的 `EASYTIER_HASH`；缺少摘要时构建应失败。
+- `EASYTIER_VERSION` 固定上游核心程序版本；`LUCI_APP_VERSION` 固定 LuCI 插件版本和仓库 Release 标签。
+- 上游核心程序的默认版本和各架构 SHA256 保存在 `version.mk` 与 `easytier/common.mk`。
+- 自定义核心版本必须同时设置 `EASYTIER_VERSION` 和该资产的 `EASYTIER_HASH`；缺少摘要时构建应失败。
 - 发布构建应保留源校验，不在设备运行时下载、不跳过摘要验证。
 - ARM 包架构通过 OpenWrt `ARCH_PACKAGES` 映射到上游 ARM 或 ARMv7 资产。
 

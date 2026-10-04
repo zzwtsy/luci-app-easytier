@@ -35,8 +35,9 @@ root/usr/share/easytier/firewall.sh            UCI network and firewall manageme
 
 `easytier/Makefile` and `easytier-noweb/Makefile` share `easytier/common.mk`. Packages use OpenWrt's download and checksum flow with the upstream asset name `easytier-linux-<arch>-v<version>.zip`.
 
-- The default version and per-architecture SHA256 hashes are kept in `easytier/common.mk` and `version.mk`.
-- A custom version must set both `EASYTIER_VERSION` and `EASYTIER_HASH`; the build should fail when the checksum is missing.
+- `EASYTIER_VERSION` pins the upstream core binary; `LUCI_APP_VERSION` versions the LuCI package and repository release tag.
+- The default upstream core version and per-architecture SHA256 hashes are kept in `version.mk` and `easytier/common.mk`.
+- A custom core version must set both `EASYTIER_VERSION` and `EASYTIER_HASH`; the build should fail when the checksum is missing.
 - Keep source verification enabled in release builds. Do not download binaries on the device or skip checksum verification.
 - Map ARM packages to the upstream ARM or ARMv7 asset using OpenWrt's `ARCH_PACKAGES` value.
 

@@ -30,11 +30,25 @@ case "$SDK" in
 		;;
 esac
 
+EASYTIER_VERSION="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' "$ROOT/version.mk")"
+LUCI_APP_VERSION="$(awk -F= '$1 == "LUCI_APP_VERSION" { print $2; exit }' "$ROOT/version.mk")"
+[[ -n "$EASYTIER_VERSION" && -n "$LUCI_APP_VERSION" ]] || {
+	echo "Missing package version in $ROOT/version.mk" >&2
+	exit 1
+}
+
 shopt -s nullglob
-for prefix in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn; do
-	matches=("$PACKAGE_DIR/$prefix$package_separator"*."$extension")
+for package in easytier easytier-noweb; do
+	matches=("$PACKAGE_DIR/$package$package_separator$EASYTIER_VERSION"*."$extension")
 	if [[ ${#matches[@]} -eq 0 ]]; then
-		echo "Missing $prefix *.$extension package for $BUILD_TARGET in $PACKAGE_DIR" >&2
+		echo "Missing $package version $EASYTIER_VERSION for $BUILD_TARGET in $PACKAGE_DIR" >&2
+		exit 1
+	fi
+done
+for package in luci-app-easytier luci-i18n-easytier-zh-cn; do
+	matches=("$PACKAGE_DIR/$package$package_separator$LUCI_APP_VERSION"*."$extension")
+	if [[ ${#matches[@]} -eq 0 ]]; then
+		echo "Missing $package version $LUCI_APP_VERSION for $BUILD_TARGET in $PACKAGE_DIR" >&2
 		exit 1
 	fi
 done
@@ -60,7 +74,7 @@ case "$SDK" in
 		;;
 esac
 
-export BUILD_TARGET EASYTIER_VERSION="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' "$ROOT/version.mk")"
+export BUILD_TARGET EASYTIER_VERSION LUCI_APP_VERSION
 export PACKAGE_EXTENSION="$extension" PACKAGE_MANAGER="$manager"
 export INSTALL_STANDARD="$standard_install" INSTALL_NOWEB="$noweb_install" INSTALL_LUCI_ONLY="$luci_install"
 python3 - "$ROOT/.github/README_PACKAGE.md.in" "$PACKAGE_DIR/README_PACKAGE.md" <<'PY'
@@ -72,6 +86,7 @@ template = pathlib.Path(sys.argv[1]).read_text()
 values = {
     "BUILD_TARGET": os.environ["BUILD_TARGET"],
     "EASYTIER_VERSION": os.environ["EASYTIER_VERSION"],
+    "LUCI_APP_VERSION": os.environ["LUCI_APP_VERSION"],
     "PACKAGE_EXTENSION": os.environ["PACKAGE_EXTENSION"],
     "PACKAGE_MANAGER": os.environ["PACKAGE_MANAGER"],
     "INSTALL_STANDARD": os.environ["INSTALL_STANDARD"],

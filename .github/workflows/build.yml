@@ -74,9 +74,9 @@ jobs:
                 ;;
             esac
             requested_version="${RELEASE_TAG#v}"
-            expected_version="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' version.mk)"
+            expected_version="$(awk -F= '$1 == "LUCI_APP_VERSION" { print $2; exit }' version.mk)"
             if [[ "$requested_version" != "$expected_version" ]]; then
-              echo "::error::Tag version $requested_version does not match EasyTier version $expected_version."
+              echo "::error::Tag version $requested_version does not match LuCI app version $expected_version."
               exit 1
             fi
             if [[ "$BUILD_ARCH" != all ]]; then
@@ -252,6 +252,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ needs.validate.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
           body: |
             - OpenWrt 24.10 packages use .ipk and opkg.
             - OpenWrt 25.12 and Snapshot packages use .apk and apk.

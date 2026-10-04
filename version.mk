@@ -1,5 +1,6 @@
-# EasyTier Version Configuration
-# This file is the single source of truth for the EasyTier version
-# Used by: easytier/Makefile, luci-app-easytier/Makefile, init.d/easytier
+# Package Version Configuration
+# EASYTIER_VERSION selects the upstream EasyTier core binary.
+# LUCI_APP_VERSION versions the LuCI package and this repository's releases.
 
 EASYTIER_VERSION=2.6.4
+LUCI_APP_VERSION=3.0.0

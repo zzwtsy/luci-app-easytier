@@ -1,7 +1,8 @@
 # EasyTier OpenWrt Packages / EasyTier OpenWrt 安装包说明
 
 Build target / 构建目标: @BUILD_TARGET@
-EasyTier version / EasyTier 版本: @EASYTIER_VERSION@
+EasyTier core version / EasyTier 核心版本: @EASYTIER_VERSION@
+LuCI package version / LuCI 插件版本: @LUCI_APP_VERSION@
 Package format / 安装包格式: .@PACKAGE_EXTENSION@ using @PACKAGE_MANAGER@
 
 Download packages matching your device architecture and OpenWrt release. / 请下载与设备架构和 OpenWrt 版本匹配的安装包。
