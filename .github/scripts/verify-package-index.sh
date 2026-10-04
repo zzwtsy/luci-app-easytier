@@ -23,7 +23,7 @@ case "$SDK" in
 		}
 		public_key="$KEY_DIR/easytier-apk.pem"
 		key_mount="$public_key:/keys/easytier-apk.pem:ro"
-		docker_command='/builder/staging_dir/host/bin/apk --keys-dir /keys verify /feed/packages.adb /feed/*.apk'
+		docker_command='/builder/staging_dir/host/bin/apk --keys-dir /keys verify /feed/packages.adb'
 		;;
 	*)
 		echo "No signed feed verification is configured for SDK $SDK" >&2
