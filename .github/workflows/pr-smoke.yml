@@ -75,7 +75,8 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          PACKAGES: easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn
+          # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
+          PACKAGES: easytier easytier-noweb luci-app-easytier
           NO_REFRESH_CHECK: 1
           V: s
       - name: Verify package outputs
