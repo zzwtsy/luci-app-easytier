@@ -43,14 +43,14 @@ return view.extend({
 		var webPath = E('input', { class: 'cbi-input-text', type: 'text' });
 		corePath.value = uci.get('easytier', sid, 'easytierbin') || '/usr/bin/easytier-core';
 		webPath.value = uci.get('easytier', sid, 'webbin') || '/usr/bin/easytier-web';
-		var file = E('input', { type: 'file', accept: '.zip,.tar,.tar.gz,.tgz,easytier-core,easytier-cli,easytier-web-embed' });
+		var file = E('input', { type: 'file', accept: '.zip,.tar,.tar.gz,.tgz,easytier-core,easytier-cli,easytier-web-embed', style: 'display:block;margin-bottom:0.5em;' });
 		var progress = E('progress', { max: 100, value: 0, style: 'width:100%;display:none;' });
 		var message = E('p', {}, _('Select an official EasyTier binary or release archive.'));
 		var installRestart = E('button', {
 			class: 'btn cbi-button cbi-button-positive',
+			style: 'display:none;',
 			click: ui.createHandlerFn(this, function() { return this.restart(); })
 		}, _('Restart EasyTier'));
-		installRestart.disabled = true;
 
 		refs.program = E('div', { class: 'cbi-section' }, [
 			E('h3', {}, _('Program Management')),
@@ -59,27 +59,28 @@ return view.extend({
 				E('div', { class: 'tr' }, [E('div', { class: 'td left', style: 'width:30%' }, _('Core Binary Path')), E('div', { class: 'td left' }, corePath)]),
 				E('div', { class: 'tr' }, [E('div', { class: 'td left', style: 'width:30%' }, _('Web Binary Path')), E('div', { class: 'td left' }, webPath)])
 			]),
-			E('button', {
+			E('div', { style: 'margin-top:0.5em;' }, E('button', {
 				class: 'btn cbi-button cbi-button-save',
 				click: ui.createHandlerFn(this, function() { return this.savePaths(sid, corePath.value, webPath.value); })
-			}, _('Save Binary Paths')),
+			}, _('Save Binary Paths'))),
 			E('hr'),
 			E('p', {}, _('Supported archive formats: ZIP, TAR, TAR.GZ, and TGZ. Supported binaries: easytier-core, easytier-cli, and easytier-web-embed.')),
 			file,
 			progress,
 			message,
-			E('button', {
-				class: 'btn cbi-button cbi-button-action',
-				click: ui.createHandlerFn(this, function() {
-					if (!file.files || !file.files.length) {
-						message.textContent = _('Choose a file first.');
-						return Promise.resolve();
-					}
-					return this.upload(file.files[0], progress, message, installRestart);
-				})
-			}, _('Upload and Install')),
-			' ',
-			installRestart
+			E('div', { style: 'display:flex;gap:0.5em;flex-wrap:wrap;margin-top:0.5em;' }, [
+				E('button', {
+					class: 'btn cbi-button cbi-button-action',
+					click: ui.createHandlerFn(this, function() {
+						if (!file.files || !file.files.length) {
+							message.textContent = _('Choose a file first.');
+							return Promise.resolve();
+						}
+						return this.upload(file.files[0], progress, message, installRestart);
+					})
+				}, _('Upload and Install')),
+				installRestart
+			])
 		]);
 
 		function row(title, valueEl) {
@@ -169,7 +170,7 @@ return view.extend({
 				' ',
 				E('a', { href: L.url('admin/vpn/easytier/diagnostics') }, _('Open Diagnostics'))
 			]));
-		dom.content(refs.alerts, E([], messages));
+		dom.content(refs.alerts, E('div', {}, messages));
 
 		// 按运行态给出可执行操作：运行中显示停止与重启，停止时显示启动。
 		var actions = [];
@@ -179,7 +180,6 @@ return view.extend({
 					class: 'btn cbi-button cbi-button-negative',
 					click: ui.createHandlerFn(this, function() { return this.runAction('stop'); })
 				}, _('Stop')));
-				actions.push(' ');
 				actions.push(E('button', {
 					class: 'btn cbi-button cbi-button-action',
 					click: ui.createHandlerFn(this, function() { return this.runAction('restart'); })
@@ -192,7 +192,7 @@ return view.extend({
 				}, _('Start')));
 			}
 		}
-		dom.content(refs.actions, E([], actions));
+		dom.content(refs.actions, E('div', { style: 'display:flex;gap:0.5em;margin-top:0.5em;' }, actions));
 	},
 	updateNetinfo: function(network) {
 		var refs = this.refs;
@@ -261,7 +261,7 @@ return view.extend({
 				easytier.manage('install-upload', [name]).then(function(result) {
 					message.textContent = result.message;
 					// 安装成功后才开放重启按钮，让用户明确决定何时切换正在运行的程序。
-					restart.disabled = false;
+					restart.style.display = '';
 					resolve();
 				}).catch(reject);
 			};

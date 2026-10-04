@@ -9,6 +9,7 @@
 			"file": {
 				"/usr/libexec/easytier/rpc status": [ "exec" ],
 				"/usr/libexec/easytier/rpc conninfo *": [ "exec" ],
+				"/usr/libexec/easytier/rpc netinfo": [ "exec" ],
 				"/usr/libexec/easytier/rpc netinfo *": [ "exec" ],
 				"/usr/libexec/easytier/rpc logs *": [ "exec" ],
 				"/etc/easytier/config.toml": [ "read" ],

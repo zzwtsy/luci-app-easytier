@@ -2,6 +2,10 @@
 	"admin/vpn/easytier": {
 		"title": "EasyTier",
 		"order": 46,
+		"action": {
+			"type": "alias",
+			"path": "admin/vpn/easytier/status"
+		},
 		"depends": {
 			"acl": [ "luci-app-easytier" ]
 		}

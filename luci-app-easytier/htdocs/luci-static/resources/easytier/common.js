@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require fs';
 
 function callRead(action, params) {
@@ -42,8 +43,8 @@ function initAction(action) {
 	});
 }
 
-return {
+return baseclass.extend({
 	read: callRead,
 	manage: callManage,
 	service: initAction
-};
+});

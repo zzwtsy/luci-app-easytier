@@ -122,7 +122,7 @@ return view.extend({
 		var page = E('div', { class: 'cbi-map' }, [
 			E('h2', {}, _('EasyTier Diagnostics')),
 			E('div', { class: 'cbi-section' }, [
-				E('div', { class: 'flex', style: 'gap:0.5em;flex-wrap:wrap;margin-bottom:0.5em;' }, [
+				E('div', { style: 'display:flex;gap:0.5em;flex-wrap:wrap;align-items:center;margin-bottom:0.5em;' }, [
 					sourceSelect,
 					intervalSelect,
 					E('button', {

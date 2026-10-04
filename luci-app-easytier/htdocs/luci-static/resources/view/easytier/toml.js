@@ -26,7 +26,7 @@ return view.extend({
 			id: 'easytier-machine-id',
 			class: 'cbi-input-text',
 			type: 'text',
-			style: 'width:100%;'
+			style: 'width:20em;max-width:100%;'
 		});
 		machineId.value = data[1].trim();
 
@@ -41,33 +41,36 @@ return view.extend({
 				E('a', { href: L.url('admin/vpn/easytier/config') }, _('Open Settings'))
 			]));
 
-		var restartRow = E('div', { style: 'display:none;margin-top:0.5em;', id: 'easytier-toml-restart' }, [
-			E('button', {
-				class: 'btn cbi-button cbi-button-positive',
-				click: ui.createHandlerFn(this, function() { return this.restartCore(); })
-			}, _('Restart EasyTier Core'))
-		]);
+		var restartButton = E('button', {
+			class: 'btn cbi-button cbi-button-positive',
+			id: 'easytier-toml-restart',
+			style: 'display:none;',
+			click: ui.createHandlerFn(this, function() { return this.restartCore(); })
+		}, _('Restart EasyTier Core'));
 
 		return E('div', { class: 'cbi-map' }, [
 			E('h2', {}, _('EasyTier Configuration File')),
-			E('div', { class: 'cbi-section' }, [
-				banner,
+			E('div', { class: 'cbi-section' }, banner.concat([
 				E('p', {}, _('Edit /etc/easytier/config.toml. The Core startup method must be set to Configuration File for this file to be used.')),
 				config,
-				E('div', { class: 'right' }, E('button', {
-					class: 'btn cbi-button cbi-button-save',
-					click: ui.createHandlerFn(this, function() { return this.saveConfig(config.value); })
-				}, _('Save Configuration File'))),
-				restartRow
-			]),
+				E('div', { style: 'display:flex;gap:0.5em;justify-content:flex-end;margin-top:0.5em;' }, [
+					E('button', {
+						class: 'btn cbi-button cbi-button-save',
+						click: ui.createHandlerFn(this, function() { return this.saveConfig(config.value); })
+					}, _('Save Configuration File')),
+					restartButton
+				])
+			])),
 			E('div', { class: 'cbi-section' }, [
 				E('h3', {}, _('Machine ID')),
 				E('p', {}, _('Used by the EasyTier Web configuration mode. Leave empty to generate an ID on service start.')),
 				machineId,
-				E('div', { class: 'right' }, E('button', {
-					class: 'btn cbi-button cbi-button-save',
-					click: ui.createHandlerFn(this, function() { return this.saveMachineId(machineId.value); })
-				}, _('Save Machine ID')))
+				E('div', { style: 'display:flex;gap:0.5em;justify-content:flex-end;margin-top:0.5em;' }, [
+					E('button', {
+						class: 'btn cbi-button cbi-button-save',
+						click: ui.createHandlerFn(this, function() { return this.saveMachineId(machineId.value); })
+					}, _('Save Machine ID'))
+				])
 			])
 		]);
 	},
@@ -75,9 +78,9 @@ return view.extend({
 		// 384 是 fs.write 接受的十进制权限值，对应仅 root 可读写的 0600。
 		return fs.write('/etc/easytier/config.toml', content.replace(/\r\n/g, '\n'), 384).then(function() {
 			ui.addNotification(null, E('p', {}, _('Configuration file saved. Restart EasyTier Core to apply it.')));
-			var restartRow = document.getElementById('easytier-toml-restart');
-			if (restartRow)
-				restartRow.style.display = '';
+			var restartButton = document.getElementById('easytier-toml-restart');
+			if (restartButton)
+				restartButton.style.display = '';
 		}).catch(function(error) {
 			ui.addNotification(null, E('p', {}, error.message));
 		});
