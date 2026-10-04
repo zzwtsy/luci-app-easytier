@@ -337,38 +337,46 @@ msgid "Manage EasyTier Firewall Rules"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:131
-msgid "Interface IPv4 Netmask"
+msgid "Allow EasyTier Nodes to Access Router Services"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/easytier/config.js:132
-msgid "Connectivity Check"
+#: htdocs/luci-static/resources/view/easytier/config.js:131
+msgid "Allow nodes in the EasyTier network to reach services on the router itself."
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:134
-msgid "Check IPs"
+msgid "Interface IPv4 Netmask"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:135
+msgid "Connectivity Check"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:137
-msgid "Interval Time (minutes)"
+msgid "Check IPs"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:140
-msgid "Access Control"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/easytier/config.js:141
-msgid "Allow traffic from EasyTier to LAN"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/easytier/config.js:142
-msgid "Allow traffic from EasyTier to WAN"
+msgid "Interval Time (minutes)"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:143
-msgid "Allow traffic from LAN to EasyTier"
+msgid "Access Control"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:144
+msgid "Allow traffic from EasyTier to LAN"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:145
+msgid "Allow traffic from EasyTier to WAN"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:146
+msgid "Allow traffic from LAN to EasyTier"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:147
 msgid "Allow traffic from WAN to EasyTier"
 msgstr ""
 
@@ -981,11 +989,11 @@ msgstr ""
 msgid "Each list entry is passed as one argument."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/easytier/config.js:132
+#: htdocs/luci-static/resources/view/easytier/config.js:135
 msgid "Restart EasyTier Core when every configured IPv4 target is unreachable."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/easytier/config.js:134
+#: htdocs/luci-static/resources/view/easytier/config.js:137
 msgid "IPv4 addresses checked while EasyTier Core is running."
 msgstr ""
 

@@ -4,6 +4,7 @@ config easytier
 	option easytierbin '/usr/bin/easytier-core'
 	option auto_config_interface '1'
 	option auto_config_firewall '1'
+	option allow_router_input '0'
 	option interface_netmask '255.0.0.0'
 	option log 'off'
 	option check '0'

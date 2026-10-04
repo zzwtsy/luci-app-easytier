@@ -35,7 +35,10 @@ load_config() {
 	config_get etcmd "$SECTION" etcmd etcmd
 	config_get log_level "$SECTION" log off
 	config_get auto_config_interface "$SECTION" auto_config_interface 1
+	migrate_router_input_policy "$SECTION"
 	config_get auto_config_firewall "$SECTION" auto_config_firewall 1
+	allow_router_input="$(uci -q get "easytier.$SECTION.allow_router_input")"
+	[ -n "$allow_router_input" ] || allow_router_input=0
 	config_get interface_netmask "$SECTION" interface_netmask 255.0.0.0
 	config_get check "$SECTION" check 0
 	config_get checktime "$SECTION" checktime 2
@@ -59,17 +62,14 @@ setup_network() {
 	else
 		cleanup_core_interface
 	fi
+	setup_firewall_policy "$auto_config_firewall" "$allow_router_input" "$et_forward"
 	if [ "$auto_config_firewall" = 1 ]; then
-		setup_firewall_zone
-		setup_forwarding_rules "$et_forward"
 		if [ "$etcmd" = etcmd ]; then
 			[ "$udp_port" != "$tcp_port" ] || udp_port=""
 			set_firewall_rules "$tcp_port" "$udp_port" "$ws_port" "$wss_port" "$wg_port" "$quic_port"
 		else
 			set_firewall_rules "" "" "" "" "" ""
 		fi
-	else
-		cleanup_core_firewall_rules
 	fi
 }
 

@@ -11,6 +11,23 @@ set_type() {
 	[ "$(uci -q get "$package.$section")" = "$type" ] || uci set "$package.$section=$type"
 }
 
+migrate_router_input_policy() {
+	local section="$1" migration option legacy value
+	[ -n "$section" ] || section='@easytier[0]'
+	migration="$(uci -q get "easytier.$section.firewall_input_migration_version" 2>/dev/null || true)"
+	[ "$migration" = 1 ] && return 0
+
+	option="easytier.$section.allow_router_input"
+	if ! uci -q get "$option" >/dev/null 2>&1; then
+		legacy="$(uci -q get "easytier.$section.auto_config_firewall" 2>/dev/null || true)"
+		[ -n "$legacy" ] || legacy=1
+		[ "$legacy" = 1 ] && value=1 || value=0
+		uci set "$option=$value" || return 1
+	fi
+	uci set "easytier.$section.firewall_input_migration_version=1" || return 1
+	uci commit easytier
+}
+
 set_rule() {
 	local section="$1" protocol="$2" port="$3"
 	# 端口为空或不合法时清除旧规则，防止配置被移除后仍意外暴露服务。
@@ -47,10 +64,14 @@ setup_network_interface() {
 
 # 规则名称固定带有 EasyTier 前缀，清理时只删除本插件创建和维护的 UCI 节。
 setup_firewall_zone() {
+	local allow_router_input="${1:-0}"
 	set_type firewall easytierzone zone
 	set_option firewall easytierzone name EasyTier
 	set_option firewall easytierzone network EasyTier
-	set_option firewall easytierzone input ACCEPT
+	case "$allow_router_input" in
+	1) set_option firewall easytierzone input ACCEPT ;;
+	*) set_option firewall easytierzone input REJECT ;;
+	esac
 	set_option firewall easytierzone output ACCEPT
 	set_option firewall easytierzone forward ACCEPT
 	set_option firewall easytierzone masq 1
@@ -135,6 +156,16 @@ cleanup_core_firewall_rules() {
 	uci -q delete firewall.easytier_tcp
 	uci -q delete firewall.easytier_wireguard
 	uci -q delete firewall.easytier_socks5
+}
+
+setup_firewall_policy() {
+	local manage="$1" allow_router_input="$2" forwards="$3"
+	if [ "$manage" = 1 ]; then
+		setup_firewall_zone "$allow_router_input"
+		setup_forwarding_rules "$forwards"
+	else
+		cleanup_core_firewall_rules
+	fi
 }
 
 commit_firewall_changes() {

@@ -128,6 +128,9 @@ return view.extend({
 		// 接口、防火墙和连通性检查独立于启动方式，适用于由外部自行管理网络的部署。
 		add(s, 'network', form.Flag, 'auto_config_interface', 'Manage EasyTier Network Interface');
 		add(s, 'network', form.Flag, 'auto_config_firewall', 'Manage EasyTier Firewall Rules');
+		var allowRouterInput = add(s, 'network', form.Flag, 'allow_router_input', 'Allow EasyTier Nodes to Access Router Services', 'Allow nodes in the EasyTier network to reach services on the router itself.');
+		allowRouterInput.default = '0';
+		allowRouterInput.depends('auto_config_firewall', '1');
 		add(s, 'network', form.Value, 'interface_netmask', 'Interface IPv4 Netmask', null, 'ip4addr');
 		var connectivityCheck = add(s, 'network', form.Flag, 'check', 'Connectivity Check', 'Restart EasyTier Core when every configured IPv4 target is unreachable.');
 		connectivityCheck.default = '0';

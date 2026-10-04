@@ -332,38 +332,46 @@ msgid "Manage EasyTier Firewall Rules"
 msgstr "管理 EasyTier 防火墙规则"
 
 #: htdocs/luci-static/resources/view/easytier/config.js:131
+msgid "Allow EasyTier Nodes to Access Router Services"
+msgstr "允许 EasyTier 节点访问路由器服务"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:131
+msgid "Allow nodes in the EasyTier network to reach services on the router itself."
+msgstr "允许 EasyTier 网络中的节点访问路由器本机服务。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:134
 msgid "Interface IPv4 Netmask"
 msgstr "接口 IPv4 子网掩码"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:132
+#: htdocs/luci-static/resources/view/easytier/config.js:135
 msgid "Connectivity Check"
 msgstr "连通性检测"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:134
+#: htdocs/luci-static/resources/view/easytier/config.js:137
 msgid "Check IPs"
 msgstr "检测 IP"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:137
+#: htdocs/luci-static/resources/view/easytier/config.js:140
 msgid "Interval Time (minutes)"
 msgstr "检测间隔（分钟）"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:140
+#: htdocs/luci-static/resources/view/easytier/config.js:143
 msgid "Access Control"
 msgstr "访问控制"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:141
+#: htdocs/luci-static/resources/view/easytier/config.js:144
 msgid "Allow traffic from EasyTier to LAN"
 msgstr "允许 EasyTier 网络访问 LAN"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:142
+#: htdocs/luci-static/resources/view/easytier/config.js:145
 msgid "Allow traffic from EasyTier to WAN"
 msgstr "允许 EasyTier 网络访问 WAN"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:143
+#: htdocs/luci-static/resources/view/easytier/config.js:146
 msgid "Allow traffic from LAN to EasyTier"
 msgstr "允许 LAN 访问 EasyTier 网络"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:144
+#: htdocs/luci-static/resources/view/easytier/config.js:147
 msgid "Allow traffic from WAN to EasyTier"
 msgstr "允许 WAN 访问 EasyTier 网络"
 
@@ -982,11 +990,11 @@ msgstr "可选的 WireGuard VPN 门户。"
 msgid "Each list entry is passed as one argument."
 msgstr "每个列表条目作为一个参数传递。"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:132
+#: htdocs/luci-static/resources/view/easytier/config.js:135
 msgid "Restart EasyTier Core when every configured IPv4 target is unreachable."
 msgstr "所有已配置的 IPv4 目标均不可达时重启 EasyTier Core。"
 
-#: htdocs/luci-static/resources/view/easytier/config.js:134
+#: htdocs/luci-static/resources/view/easytier/config.js:137
 msgid "IPv4 addresses checked while EasyTier Core is running."
 msgstr "EasyTier Core 运行期间检测的 IPv4 地址。"
 
