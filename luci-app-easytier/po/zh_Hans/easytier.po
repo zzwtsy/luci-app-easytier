@@ -118,6 +118,30 @@ msgstr "虚拟网卡名称"
 msgid "Listener Ports"
 msgstr "监听端口"
 
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "TCP/UDP Port"
+msgstr "TCP/UDP 端口"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "UDP Port"
+msgstr "UDP 端口"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "WS Port"
+msgstr "WS 端口"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "WSS Port"
+msgstr "WSS 端口"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:71
+msgid "WireGuard Port"
+msgstr "WireGuard 端口"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:71
+msgid "QUIC Port"
+msgstr "QUIC 端口"
+
 #: htdocs/luci-static/resources/view/easytier/config.js:76
 msgid "Mapped Listener Addresses"
 msgstr "映射监听地址"
@@ -169,6 +193,30 @@ msgstr "端口转发"
 #: htdocs/luci-static/resources/view/easytier/config.js:94
 msgid "Foreign Relay Bandwidth Limit"
 msgstr "外部中继带宽限制"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:96
+msgid "Enable KCP Proxy"
+msgstr "启用 KCP 代理"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:96
+msgid "Disable KCP Input"
+msgstr "禁用 KCP 输入"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:97
+msgid "Enable QUIC Proxy"
+msgstr "启用 QUIC 代理"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:97
+msgid "Disable QUIC Input"
+msgstr "禁用 QUIC 输入"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Enable Foreign Network KCP Relay"
+msgstr "启用外部网络 KCP 中继"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Disable Relay KCP"
+msgstr "禁用中继 KCP"
 
 #: htdocs/luci-static/resources/view/easytier/config.js:101
 msgid "Disable Encryption"
@@ -222,6 +270,54 @@ msgstr "VPN门户URL"
 #: htdocs/luci-static/resources/view/easytier/config.js:117
 msgid "Compression Algorithm"
 msgstr "压缩算法"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:117
+msgid "Zstandard"
+msgstr "Zstandard"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:119
+msgid "Use Userspace TCP/IP Stack"
+msgstr "使用用户态 TCP/IP 协议栈"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:119
+msgid "No TUN Mode"
+msgstr "无 TUN 模式"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:120
+msgid "Disable IPv6"
+msgstr "禁用 IPv6"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:120
+msgid "Latency First"
+msgstr "延迟优先"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "Disable P2P"
+msgstr "禁用 P2P"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "P2P Only"
+msgstr "仅 P2P"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:122
+msgid "Disable UDP Hole Punching"
+msgstr "禁用 UDP 打洞"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:122
+msgid "Disable TCP Hole Punching"
+msgstr "禁用 TCP 打洞"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:123
+msgid "Disable Symmetric NAT Hole Punching"
+msgstr "禁用对称型 NAT 打洞"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:123
+msgid "Bind to Physical NIC"
+msgstr "绑定物理网卡"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:124
+msgid "Accept DNS"
+msgstr "接受 DNS"
 
 #: htdocs/luci-static/resources/view/easytier/config.js:126
 msgid "Additional Arguments"
@@ -715,6 +811,30 @@ msgstr "使用外部身份提供方登录 Web 控制台。"
 #: htdocs/luci-static/resources/view/easytier/web.js:78
 msgid "Enable OpenID Connect"
 msgstr "启用 OpenID Connect"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:80
+msgid "Issuer URL"
+msgstr "颁发方 URL"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:80
+msgid "Client ID"
+msgstr "客户端 ID"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:81
+msgid "Redirect URL"
+msgstr "重定向 URL"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:81
+msgid "Username Claim"
+msgstr "用户名声明"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:82
+msgid "Scopes"
+msgstr "授权范围"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:82
+msgid "Frontend Base URL"
+msgstr "前端基础 URL"
 
 #: htdocs/luci-static/resources/view/easytier/web.js:84
 msgid "Client Secret"

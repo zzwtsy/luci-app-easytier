@@ -123,6 +123,30 @@ msgstr ""
 msgid "Listener Ports"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "TCP/UDP Port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "UDP Port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "WS Port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:70
+msgid "WSS Port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:71
+msgid "WireGuard Port"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:71
+msgid "QUIC Port"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/easytier/config.js:76
 msgid "Mapped Listener Addresses"
 msgstr ""
@@ -173,6 +197,30 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:94
 msgid "Foreign Relay Bandwidth Limit"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:96
+msgid "Enable KCP Proxy"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:96
+msgid "Disable KCP Input"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:97
+msgid "Enable QUIC Proxy"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:97
+msgid "Disable QUIC Input"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Enable Foreign Network KCP Relay"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Disable Relay KCP"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:101
@@ -226,6 +274,54 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:117
 msgid "Compression Algorithm"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:117
+msgid "Zstandard"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:119
+msgid "Use Userspace TCP/IP Stack"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:119
+msgid "No TUN Mode"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:120
+msgid "Disable IPv6"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:120
+msgid "Latency First"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "Disable P2P"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "P2P Only"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:122
+msgid "Disable UDP Hole Punching"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:122
+msgid "Disable TCP Hole Punching"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:123
+msgid "Disable Symmetric NAT Hole Punching"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:123
+msgid "Bind to Physical NIC"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:124
+msgid "Accept DNS"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/config.js:126
@@ -713,6 +809,30 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/web.js:78
 msgid "Enable OpenID Connect"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:80
+msgid "Issuer URL"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:80
+msgid "Client ID"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:81
+msgid "Redirect URL"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:81
+msgid "Username Claim"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:82
+msgid "Scopes"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:82
+msgid "Frontend Base URL"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/easytier/web.js:84
