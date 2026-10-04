@@ -62,6 +62,8 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
           BUILD_ARCH: ${{ inputs.architecture }}
+          OPKG_FEED_SIGNING_KEY: ${{ secrets.OPKG_FEED_SIGNING_KEY }}
+          APK_FEED_SIGNING_KEY: ${{ secrets.APK_FEED_SIGNING_KEY }}
         run: |
           set -euo pipefail
           if [[ -n "$RELEASE_TAG" ]]; then
@@ -79,6 +81,10 @@ jobs:
             fi
             if [[ "$BUILD_ARCH" != all ]]; then
               echo "::error::Release publishing requires architecture=all."
+              exit 1
+            fi
+            if [[ -z "$OPKG_FEED_SIGNING_KEY" || -z "$APK_FEED_SIGNING_KEY" ]]; then
+              echo "::error::Tagged releases require OPKG_FEED_SIGNING_KEY and APK_FEED_SIGNING_KEY repository secrets."
               exit 1
             fi
           fi
@@ -146,6 +152,9 @@ jobs:
           FEEDNAME: packages_ci
           # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
           PACKAGES: easytier easytier-noweb luci-app-easytier
+          INDEX: 1
+          KEY_BUILD: ${{ secrets.OPKG_FEED_SIGNING_KEY }}
+          PRIVATE_KEY: ${{ secrets.APK_FEED_SIGNING_KEY }}
           NO_REFRESH_CHECK: 1
           V: s
       - name: Verify package outputs and generate SDK-specific guide
@@ -153,7 +162,14 @@ jobs:
           PACKAGE_DIR: bin/packages/${{ matrix.arch }}/packages_ci
           BUILD_TARGET: ${{ matrix.arch }}-${{ matrix.sdk }}
           SDK: ${{ matrix.sdk }}
+          RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
         run: .github/scripts/prepare-package-artifacts.sh
+      - name: Verify signed stable package indexes
+        if: ${{ needs.validate.outputs.release_tag != '' && matrix.sdk != 'SNAPSHOT' }}
+        env:
+          PACKAGE_DIR: ${{ github.workspace }}/bin/packages/${{ matrix.arch }}/packages_ci
+          SDK: ${{ matrix.sdk }}
+        run: .github/scripts/verify-package-index.sh
       - name: Upload build artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -225,6 +241,12 @@ jobs:
             exit 1
           }
           (cd release && sha256sum ./*.zip > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Assemble stable feeds for GitHub Pages
+        run: .github/scripts/assemble-feed-site.sh artifacts site
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa
+        with:
+          path: site
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
@@ -240,3 +262,21 @@ jobs:
             release/*.zip
             release/SHA256SUMS
           fail_on_unmatched_files: true
+
+  deploy-pages:
+    name: Deploy package feeds to GitHub Pages
+    needs:
+      - validate
+      - release
+    if: ${{ needs.validate.outputs.release_tag != '' && needs.release.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy package feed site
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e

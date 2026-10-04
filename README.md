@@ -33,14 +33,35 @@ apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk
 
 也可以只安装 `luci-app-easytier`，然后在 **VPN → EasyTier → 概览** 页面的程序管理区安装自定义构建。插件不会在设备启动或服务启动时联网下载程序。
 
-如果通过 APK 软件源安装，请使用软件源中的包名：
+### 从 GitHub Pages 软件源安装
+
+软件源为 OpenWrt 24.10.8 和 25.12.5 的匹配 SDK 构建提供签名包。每个 SDK 版本和架构只保留当前 EasyTier 包；较早版本仍可从 Releases 下载。请使用与设备匹配的 OpenWrt 包架构。24.10 可运行 `opkg print-architecture` 查看架构；25.12 及更新版本可运行 `apk --print-arch`。Snapshot 和其他补丁版本请使用 Releases 中对应的安装包。
+
+OpenWrt 24.10.8：
 
 ```sh
-apk update
-apk add easytier luci-app-easytier
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+arch="$DISTRIB_ARCH"
+wget -O /tmp/easytier-opkg.pub "$FEED_BASE/keys/easytier-opkg.pub"
+opkg-key add /tmp/easytier-opkg.pub
+echo "src/gz easytier $FEED_BASE/feeds/24.10.8/$ARCH/packages_ci" >> /etc/opkg/customfeeds.conf
+opkg update
+opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-更新软件源安装的程序时使用 APK 包管理器。手动上传适用于自定义构建或自定义程序路径。
+OpenWrt 25.12.5：
+
+```sh
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+arch="$DISTRIB_ARCH"
+mkdir -p /etc/apk/keys
+wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
+echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
+apk update
+apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
+```
+
+空间有限或不需要内嵌 Web 控制台时，将 `easytier` 替换为 `easytier-noweb`。两个核心包互相冲突。软件源安装的程序通过对应的包管理器更新；手动上传适用于自定义构建或自定义程序路径。
 
 ## 功能
 

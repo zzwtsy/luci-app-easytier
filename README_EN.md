@@ -33,14 +33,35 @@ apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk
 
 You can install only `luci-app-easytier` and upload a custom build from the program management section of **VPN → EasyTier → Overview**. The plugin does not download binaries on the device during boot or service startup.
 
-When using an APK feed, install by package name:
+### Install from the GitHub Pages package feed
+
+Signed feed packages are built for matching OpenWrt 24.10.8 and 25.12.5 SDKs. Each SDK and architecture feed keeps the current EasyTier packages; older versions remain available from Releases. Use the package architecture for your device. On 24.10, check it with `opkg print-architecture`; on 25.12 and later, use `apk --print-arch`. For Snapshot and other point releases, use the matching package archive from Releases.
+
+OpenWrt 24.10.8:
 
 ```sh
-apk update
-apk add easytier luci-app-easytier
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+ARCH=x86_64 # replace with your device architecture
+wget -O /tmp/easytier-opkg.pub "$FEED_BASE/keys/easytier-opkg.pub"
+opkg-key add /tmp/easytier-opkg.pub
+echo "src/gz easytier $FEED_BASE/feeds/24.10.8/$ARCH/packages_ci" >> /etc/opkg/customfeeds.conf
+opkg update
+opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-Update feed-installed programs through APK. Manual upload is for custom builds and custom binary paths.
+OpenWrt 25.12.5:
+
+```sh
+FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
+ARCH=x86_64 # replace with your device architecture
+mkdir -p /etc/apk/keys
+wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
+echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
+apk update
+apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
+```
+
+For storage-constrained devices or when the embedded Web Console is not needed, replace `easytier` with `easytier-noweb`. The two core packages conflict. Update feed-installed packages with the corresponding package manager. Manual upload is for custom builds and custom binary paths.
 
 ## Features
 

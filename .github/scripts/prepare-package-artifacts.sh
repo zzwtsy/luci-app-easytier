@@ -4,6 +4,7 @@ set -euo pipefail
 : "${PACKAGE_DIR:?PACKAGE_DIR must point to the SDK output directory}"
 : "${BUILD_TARGET:?BUILD_TARGET is required}"
 : "${SDK:?SDK is required}"
+: "${RELEASE_TAG:=}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 case "$SDK" in
@@ -37,6 +38,27 @@ for prefix in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn
 		exit 1
 	fi
 done
+
+case "$SDK" in
+	24.10.*)
+		for index in Packages Packages.gz; do
+			if [[ ! -s "$PACKAGE_DIR/$index" ]]; then
+				echo "Missing $index for $BUILD_TARGET in $PACKAGE_DIR" >&2
+				exit 1
+			fi
+		done
+		if [[ -n "$RELEASE_TAG" && ! -s "$PACKAGE_DIR/Packages.sig" ]]; then
+			echo "Missing signed Packages.sig for tagged release $BUILD_TARGET" >&2
+			exit 1
+		fi
+		;;
+	25.12.*|SNAPSHOT)
+		if [[ ! -s "$PACKAGE_DIR/packages.adb" ]]; then
+			echo "Missing packages.adb for $BUILD_TARGET in $PACKAGE_DIR" >&2
+			exit 1
+		fi
+		;;
+esac
 
 export BUILD_TARGET EASYTIER_VERSION="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' "$ROOT/version.mk")"
 export PACKAGE_EXTENSION="$extension" PACKAGE_MANAGER="$manager"
