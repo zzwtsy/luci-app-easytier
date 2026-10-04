@@ -1,4 +1,6 @@
 # Map OpenWrt target/ABI properties to an upstream EasyTier release asset.
+# Feed indexing may parse this Makefile before a target SDK supplies ARCH.
+ifneq ($(strip $(ARCH)),)
 ifeq ($(ARCH),arm)
   ifneq ($(filter arm_cortex-a%,$(ARCH_PACKAGES)),)
     EASYTIER_ARM_ARCH:=armv7
@@ -16,4 +18,5 @@ else ifneq ($(filter mips mipsel x86_64,$(ARCH)),)
   APP_ARCH:=$(ARCH)
 else
   $(error Unsupported EasyTier OpenWrt architecture: ARCH=$(ARCH), ARCH_PACKAGES=$(ARCH_PACKAGES))
+endif
 endif

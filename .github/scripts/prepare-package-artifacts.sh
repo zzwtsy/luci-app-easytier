@@ -9,6 +9,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 case "$SDK" in
 	24.10.*)
 		extension=ipk
+		package_separator=_
 		manager=opkg
 		standard_install="opkg install /tmp/easytier_*.ipk /tmp/luci-app-easytier_*.ipk /tmp/luci-i18n-easytier-zh-cn_*.ipk"
 		noweb_install="opkg install /tmp/easytier-noweb_*.ipk /tmp/luci-app-easytier_*.ipk /tmp/luci-i18n-easytier-zh-cn_*.ipk"
@@ -16,10 +17,11 @@ case "$SDK" in
 		;;
 	25.12.*|SNAPSHOT)
 		extension=apk
+		package_separator=-
 		manager=apk
-		standard_install="apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk /tmp/luci-i18n-easytier-zh-cn_*.apk"
-		noweb_install="apk add --allow-untrusted /tmp/easytier-noweb_*.apk /tmp/luci-app-easytier_*.apk /tmp/luci-i18n-easytier-zh-cn_*.apk"
-		luci_install="apk add --allow-untrusted /tmp/luci-app-easytier_*.apk /tmp/luci-i18n-easytier-zh-cn_*.apk"
+		standard_install="apk add --allow-untrusted /tmp/easytier-*.apk /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
+		noweb_install="apk add --allow-untrusted /tmp/easytier-noweb-*.apk /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
+		luci_install="apk add --allow-untrusted /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
 		;;
 	*)
 		echo "Unsupported SDK version: $SDK" >&2
@@ -29,7 +31,7 @@ esac
 
 shopt -s nullglob
 for prefix in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn; do
-	matches=("$PACKAGE_DIR/$prefix"_*."$extension")
+	matches=("$PACKAGE_DIR/$prefix$package_separator"*."$extension")
 	if [[ ${#matches[@]} -eq 0 ]]; then
 		echo "Missing $prefix *.$extension package for $BUILD_TARGET in $PACKAGE_DIR" >&2
 		exit 1

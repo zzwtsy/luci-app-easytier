@@ -195,8 +195,8 @@ jobs:
           for dir in "${artifact_dirs[@]}"; do
             name="${dir##*/}"
             case "$name" in
-              *-24.10.8) extension=ipk ;;
-              *-25.12.5|*-SNAPSHOT) extension=apk ;;
+              *-24.10.8) extension=ipk; package_separator=_ ;;
+              *-25.12.5|*-SNAPSHOT) extension=apk; package_separator=- ;;
               *) echo "::error::Unknown SDK in artifact $name."; exit 1 ;;
             esac
             packages=("$dir"/*."$extension")
@@ -206,7 +206,7 @@ jobs:
               exit 1
             }
             for prefix in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn; do
-              matches=("$dir/$prefix"_*."$extension")
+              matches=("$dir/$prefix$package_separator"*."$extension")
               [[ ${#matches[@]} -gt 0 ]] || {
                 echo "::error::Missing $prefix *.$extension package in $name."
                 exit 1

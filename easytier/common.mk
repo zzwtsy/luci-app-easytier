@@ -3,10 +3,13 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 EASYTIER_COMMON_DIR:=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 include $(EASYTIER_COMMON_DIR)arch.mk
 
-PKG_SOURCE:=easytier-linux-$(APP_ARCH)-v$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://github.com/EasyTier/EasyTier/releases/download/v$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=unzip/host
 PKG_LICENSE:=Apache-2.0
+
+# Resolve the binary asset and checksum only when a target SDK provides its architecture.
+ifneq ($(strip $(APP_ARCH)),)
+PKG_SOURCE:=easytier-linux-$(APP_ARCH)-v$(PKG_VERSION).zip
+PKG_SOURCE_URL:=https://github.com/EasyTier/EasyTier/releases/download/v$(PKG_VERSION)
 
 # 固定上游版本使用逐架构校验和；覆盖版本时必须由调用方提供对应摘要。
 ifeq ($(PKG_VERSION),2.6.4)
@@ -35,6 +38,7 @@ else
 	endif
 	PKG_HASH:=$(EASYTIER_HASH)
 endif
+endif
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -44,7 +48,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=A simple, decentralized mesh VPN with WireGuard support.
-	DEPENDS:=@(x86_64||arm||aarch64||mipsel||mips) +kmod-tun
+	DEPENDS:=@(TARGET_x86_64||arm||aarch64||mipsel||mips) +kmod-tun
 	CONFLICTS:=$(EASYTIER_CONFLICTS)
 	URL:=https://github.com/EasyTier/EasyTier
 	MENU:=1
@@ -87,4 +91,3 @@ ifdef CONFIG_EASYTIER_INCLUDE_WEBCONSOLE
 endif
 endif
 endef
-
