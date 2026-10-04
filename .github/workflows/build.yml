@@ -8,6 +8,11 @@ on:
         required: false
         default: ''
         type: string
+      verify_signed_indexes:
+        description: 'Verify signed package indexes without publishing a release'
+        required: true
+        default: false
+        type: boolean
       text:
         description: 'Release notes'
         required: false
@@ -62,6 +67,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
           BUILD_ARCH: ${{ inputs.architecture }}
+          VERIFY_SIGNED_INDEXES: ${{ inputs.verify_signed_indexes }}
           OPKG_FEED_SIGNING_KEY: ${{ secrets.OPKG_FEED_SIGNING_KEY }}
           APK_FEED_SIGNING_KEY: ${{ secrets.APK_FEED_SIGNING_KEY }}
         run: |
@@ -83,8 +89,10 @@ jobs:
               echo "::error::Release publishing requires architecture=all."
               exit 1
             fi
+          fi
+          if [[ -n "$RELEASE_TAG" || "$VERIFY_SIGNED_INDEXES" == "true" ]]; then
             if [[ -z "$OPKG_FEED_SIGNING_KEY" || -z "$APK_FEED_SIGNING_KEY" ]]; then
-              echo "::error::Tagged releases require OPKG_FEED_SIGNING_KEY and APK_FEED_SIGNING_KEY repository secrets."
+              echo "::error::Signed feed verification requires OPKG_FEED_SIGNING_KEY and APK_FEED_SIGNING_KEY repository secrets."
               exit 1
             fi
           fi
@@ -165,7 +173,7 @@ jobs:
           RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
         run: .github/scripts/prepare-package-artifacts.sh
       - name: Verify signed stable package indexes
-        if: ${{ needs.validate.outputs.release_tag != '' && matrix.sdk != 'SNAPSHOT' }}
+        if: ${{ (needs.validate.outputs.release_tag != '' || inputs.verify_signed_indexes) && matrix.sdk != 'SNAPSHOT' }}
         env:
           PACKAGE_DIR: ${{ github.workspace }}/bin/packages/${{ matrix.arch }}/packages_ci
           SDK: ${{ matrix.sdk }}
