@@ -15,7 +15,15 @@ A LuCI application for configuring and managing [EasyTier](https://github.com/Ea
 
 ## Install
 
-Download APK packages for your device architecture from Releases. Install one EasyTier core package and the LuCI application:
+Download the package matching your device architecture and OpenWrt release from Releases. OpenWrt 24.10 uses IPK; OpenWrt 25.12 and later use APK. Install one core package with the LuCI application:
+
+OpenWrt 24.10:
+
+```sh
+opkg install /tmp/easytier_*.ipk /tmp/luci-app-easytier_*.ipk
+```
+
+OpenWrt 25.12 and later:
 
 ```sh
 apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk

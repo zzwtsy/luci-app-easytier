@@ -1,28 +1,59 @@
 name: Build-OpenWrt-EasyTier
 
 on:
-  #push:
   workflow_dispatch:
     inputs:
       tag:
-        description: '请填写发布Releases的版本号（留空不发布）'
+        description: 'Release tag (optional v prefix; leave empty to build only)'
         required: false
         default: ''
+        type: string
       text:
-        description: '请填写发布的说明'
+        description: 'Release notes'
         required: false
         default: ''
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-env:
-  TAG: "${{ github.event.inputs.tag }}"
-  TZ: Asia/Shanghai
+        type: string
+
 permissions:
-  contents: write
+  contents: read
+
 jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.tag.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+      - id: tag
+        name: Validate requested tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$RELEASE_TAG" ]]; then
+            echo "release_tag=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$RELEASE_TAG" in
+            *[!A-Za-z0-9._+-]*)
+              echo "::error::Tag contains unsupported characters."
+              exit 1
+              ;;
+          esac
+          requested_version="${RELEASE_TAG#v}"
+          expected_version="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' version.mk)"
+          if [[ "$requested_version" != "$expected_version" ]]; then
+            echo "::error::Tag version $requested_version does not match EasyTier version $expected_version."
+            exit 1
+          fi
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.arch }}-${{ matrix.sdk }}
+    needs: validate
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -42,198 +73,119 @@ jobs:
           - arm_cortex-a9_neon
           - arm_cortex-a9_vfpv3-d16
           - arm_fa526
-          #- arm_mpcore
           - arm_xscale
           - mips_24kc
-          #- mips_4kec
           - mips_mips32
           - mipsel_24kc
           - mipsel_24kc_24kf
           - mipsel_74kc
           - mipsel_mips32
           - x86_64
-          
         sdk:
           - 24.10.8
           - 25.12.5
           - SNAPSHOT
-
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 0
-      - name: Cache OpenWrt SDK
-        uses: actions/cache@v5
-        with:
-          path: |
-            /opt/openwrt-sdk-${{ matrix.arch }}-${{ matrix.sdk }}
-            dl
-          key: sdk-${{ matrix.arch }}-${{ matrix.sdk }}
-          
-      - name: Create i18n uci-defaults file
-        run: |
-          mkdir -p luci-app-easytier/root/etc/uci-defaults
-          cat > luci-app-easytier/root/etc/uci-defaults/luci-i18n-easytier-zh-cn << 'EOF'
-          #!/bin/sh
-          uci -q batch << EOI
-          set luci.languages.zh_cn='简体中文 (Simplified Chinese)'
-          commit luci
-          EOI
-          rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*
-          exit 0
-          EOF
-          chmod +x luci-app-easytier/root/etc/uci-defaults/luci-i18n-easytier-zh-cn
-          
-      - name: Building packages
-        uses: openwrt/gh-action-sdk@main
+          fetch-depth: 1
+      - name: Build packages with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
-          PACKAGES: easytier easytier-noweb luci-app-easytier
-          #NO_DEFAULT_FEEDS: 1
+          PACKAGES: easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn
           NO_REFRESH_CHECK: 1
-          NO_SHFMT_CHECK: 1
-          MAKEFLAGS: -j$(nproc)
           V: s
-
-      - name: Generate package guide
-        run: |
-          PKG_DIR="bin/packages/${{ matrix.arch }}/packages_ci"
-          EASYTIER_VERSION="$(awk -F= '/^EASYTIER_VERSION=/{print $2}' version.mk)"
-          mkdir -p "$PKG_DIR"
-          cat > "$PKG_DIR/README_PACKAGE.md" << EOF
-          # EasyTier OpenWrt Packages / EasyTier OpenWrt 安装包说明
-
-          Build target / 构建目标: \`${{ matrix.arch }}-${{ matrix.sdk }}\`
-          EasyTier version / EasyTier 版本: \`${EASYTIER_VERSION:-unknown}\`
-
-          ## Package types / 包格式
-
-          - \`*.apk\`: OpenWrt 24.10, 25.12, and Snapshot package format. / 适用于 OpenWrt 24.10、25.12 和 Snapshot。
-
-          Use packages that match your device architecture. / 请下载与设备 CPU 架构匹配的包。
-
-          ## What each package does / 每个包的作用
-
-          - \`easytier\`: EasyTier core binaries installed to \`/usr/bin\`, including \`easytier-core\`, \`easytier-cli\`, and the embedded web console binary when supported by the architecture. / EasyTier 核心程序包，安装到 \`/usr/bin\`，包含 \`easytier-core\`、\`easytier-cli\`，并在架构支持时集成自建 Web 控制台程序。
-          - \`easytier-noweb\`: EasyTier core binaries installed to \`/usr/bin\`, without the embedded web console. Use this on devices with limited storage or when you do not need the self-hosted web console. / 不包含自建 Web 控制台的核心程序包，同样安装到 \`/usr/bin\`。适合存储空间不足或不需要自建 Web 控制台的设备。
-          - \`luci-app-easytier\`: LuCI web interface, init script, UCI config, restricted manual-upload tools, and service management pages. / LuCI 管理界面，包含启动脚本、UCI 配置、受限手动上传工具和服务管理页面。
-          - \`luci-i18n-easytier-zh-cn\`: Simplified Chinese translation for the LuCI interface. / LuCI 界面的简体中文语言包。
-
-          ## Recommended install order / 推荐安装顺序
-
-          1. Install one core package: \`easytier\` or \`easytier-noweb\`. / 先安装一个核心包：\`easytier\` 或 \`easytier-noweb\`。
-          2. Install \`luci-app-easytier\`. / 再安装 \`luci-app-easytier\`。
-          3. Install \`luci-i18n-easytier-zh-cn\` if you need Simplified Chinese. / 如需中文界面，再安装 \`luci-i18n-easytier-zh-cn\`。
-
-          If you need the EasyTier binaries in a custom directory, do not install \`easytier\` or \`easytier-noweb\`. Install only \`luci-app-easytier\` and the language package, then open LuCI -> VPN -> EasyTier -> Upload Program, set the program directory, save it, and upload the official EasyTier release files manually.
-          如果需要把 EasyTier 程序安装到自定义目录，不要安装 \`easytier\` 或 \`easytier-noweb\`。只安装 \`luci-app-easytier\` 和语言包，然后进入 LuCI -> VPN -> EasyTier -> 上传程序，设置程序目录并保存，再手动上传官方 EasyTier Release 中的程序文件。
-
-          The router does not download or update EasyTier binaries at runtime. Update packaged binaries with the package manager; manually upload binaries only for custom builds or custom paths.
-          插件不会在设备运行时下载或更新 EasyTier 程序。程序包请使用包管理器更新；仅在自定义构建或自定义路径时手动上传程序。
-
-          ## APK installation / APK 安装方法
-
-          Upload the packages to \`/tmp\` on your OpenWrt device, then run:
-          将安装包上传到 OpenWrt 设备的 \`/tmp\` 目录，然后执行：
-
-          \`\`\`sh
-          apk add --allow-untrusted /tmp/easytier_*.apk
-          apk add --allow-untrusted /tmp/luci-app-easytier_*.apk
-          apk add --allow-untrusted /tmp/luci-i18n-easytier-zh-cn_*.apk
-          \`\`\`
-
-          For the no-web core package:
-          如果安装不含 Web 控制台的核心包：
-
-          \`\`\`sh
-          apk add --allow-untrusted /tmp/easytier-noweb_*.apk
-          apk add --allow-untrusted /tmp/luci-app-easytier_*.apk
-          apk add --allow-untrusted /tmp/luci-i18n-easytier-zh-cn_*.apk
-          \`\`\`
-
-          ## Install LuCI only and upload binaries manually / 只安装 LuCI 并手动上传程序
-
-          \`\`\`sh
-          apk add --allow-untrusted /tmp/luci-app-easytier_*.apk
-          apk add --allow-untrusted /tmp/luci-i18n-easytier-zh-cn_*.apk
-          \`\`\`
-
-          Then download the matching EasyTier Linux release from:
-          然后从以下地址下载匹配架构的 EasyTier Linux 官方 Release 包：
-
-          https://github.com/EasyTier/EasyTier/releases
-
-          In LuCI, go to VPN -> EasyTier -> Upload Program, set the program directory, save it, and upload \`easytier-core\`, \`easytier-cli\`, and optionally \`easytier-web-embed\`.
-          在 LuCI 中进入 VPN -> EasyTier -> 上传程序，设置程序目录并保存，然后上传 \`easytier-core\`、\`easytier-cli\`，以及可选的 \`easytier-web-embed\`。
-
-          ## After installation / 安装后
-
-          - Refresh LuCI or log in again. / 刷新 LuCI 页面或重新登录。
-          - Open VPN -> EasyTier. / 打开 VPN -> EasyTier。
-          - Configure network name, network secret, peers, and other options, then enable the service. / 配置网络名称、网络密钥、节点等参数，然后启用服务。
-          - Check logs on the EasyTier log page or by running \`logread | grep -i easytier\`. / 可在 EasyTier 日志页面查看日志，或执行 \`logread | grep -i easytier\`。
-
-          ## Troubleshooting / 问题处理
-
-          - Wrong architecture or package format: download the zip that matches your device architecture and firmware version. / 架构或包格式错误：请下载与设备架构和固件版本匹配的压缩包。
-          - Missing TUN support: install or enable \`kmod-tun\`. / 缺少 TUN 支持：安装或启用 \`kmod-tun\`。
-          - LuCI menu not visible: refresh the browser, clear LuCI cache, or run \`rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*\` and re-login. / LuCI 菜单不显示：刷新浏览器、清理 LuCI 缓存，或执行 \`rm -f /tmp/luci-indexcache /tmp/luci-modulecache/*\` 后重新登录。
-          - Manual upload is rejected: check that the asset matches the device architecture and contains EasyTier binaries. / 手动上传被拒绝：检查程序包是否匹配设备架构且包含 EasyTier 程序。
-          - Not enough storage: install \`easytier-noweb\`, or install only LuCI and upload binaries to a larger custom directory. / 存储空间不足：安装 \`easytier-noweb\`，或只安装 LuCI 并把程序上传到容量更大的自定义目录。
-          - Service does not start: verify the program path, executable permission, and configuration; then restart with \`/etc/init.d/easytier restart\`. / 服务无法启动：检查程序路径、可执行权限和配置，然后执行 \`/etc/init.d/easytier restart\`。
-
-          EOF
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+      - name: Verify package outputs and generate SDK-specific guide
+        env:
+          PACKAGE_DIR: bin/packages/${{ matrix.arch }}/packages_ci
+          BUILD_TARGET: ${{ matrix.arch }}-${{ matrix.sdk }}
+          SDK: ${{ matrix.sdk }}
+        run: .github/scripts/prepare-package-artifacts.sh
+      - name: Upload build artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ matrix.arch }}-${{ matrix.sdk }}
           path: bin/packages/${{ matrix.arch }}/packages_ci/*
+          if-no-files-found: error
+          retention-days: 7
 
   release:
     name: Publish Release
+    needs:
+      - validate
+      - build
+    if: ${{ needs.validate.outputs.release_tag != '' }}
     runs-on: ubuntu-latest
-    needs: build
-    if: ${{ github.event.inputs.tag != '' }}
-
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-${{ needs.validate.outputs.release_tag }}
+      cancel-in-progress: false
+    env:
+      RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - name: Download all build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           path: artifacts
-
-      - name: Prepare release info
+      - name: Package and checksum release archives
         run: |
-          sudo timedatectl set-timezone "Asia/Shanghai"
-          mkdir -p release
+          set -euo pipefail
           shopt -s nullglob
-          for dir in artifacts/*; do
-            name=$(basename "$dir")
-            files=("$dir"/*.apk "$dir"/*.md)
-            if [ ${#files[@]} -gt 0 ]; then
-              zip -j "release/EasyTier-${{ env.TAG }}-${name}.zip" "${files[@]}"
-            fi
+          mkdir -p release
+          artifact_dirs=(artifacts/*)
+          [[ ${#artifact_dirs[@]} -eq 66 ]] || {
+            echo "::error::Expected 66 build artifacts, found ${#artifact_dirs[@]}."
+            exit 1
+          }
+          archives=()
+          for dir in "${artifact_dirs[@]}"; do
+            name="${dir##*/}"
+            case "$name" in
+              *-24.10.8) extension=ipk ;;
+              *-25.12.5|*-SNAPSHOT) extension=apk ;;
+              *) echo "::error::Unknown SDK in artifact $name."; exit 1 ;;
+            esac
+            packages=("$dir"/*."$extension")
+            guide="$dir/README_PACKAGE.md"
+            [[ -f "$guide" ]] || {
+              echo "::error::Missing package guide in $name."
+              exit 1
+            }
+            for prefix in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn; do
+              matches=("$dir/$prefix"_*."$extension")
+              [[ ${#matches[@]} -gt 0 ]] || {
+                echo "::error::Missing $prefix *.$extension package in $name."
+                exit 1
+              }
+            done
+            archive="release/EasyTier-$RELEASE_TAG-$name.zip"
+            zip -j -q "$archive" "${packages[@]}" "$guide"
+            unzip -Z1 "$archive" | grep -q "\\.$extension$" || {
+              echo "::error::Archive $archive has no .$extension packages."
+              exit 1
+            }
+            archives+=("$archive")
           done
-          echo "build_time=$(TZ=UTC-8 date '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
+          [[ ${#archives[@]} -eq 66 ]] || {
+            echo "::error::Expected 66 release archives, found ${#archives[@]}."
+            exit 1
+          }
+          (cd release && sha256sum ./*.zip > SHA256SUMS && sha256sum -c SHA256SUMS)
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            body: |
-
-             > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-easytier?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ env.TAG }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github)
-
-             - OpenWrt **`24.10.8`**、**`25.12.5`** 和 **`SNAPSHOT`** 构建均生成 APK 安装包。
-
-             - **`*.apk` 是OpenWrt新版的APK包** 对于apk包跳过证书命令
-             `apk add --allow-untrusted luci-app-easytier.apk`
-
-             - 每个压缩包内包含 **`README_PACKAGE.md`** 中英双语说明，包含各包作用、APK 安装方法和常见问题处理
-
-             ${{ github.event.inputs.text }}
-           
-            tag_name: ${{ env.TAG }}
-            files: release/*.zip
- 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.validate.outputs.release_tag }}
+          body: |
+            - OpenWrt 24.10 packages use .ipk and opkg.
+            - OpenWrt 25.12 and Snapshot packages use .apk and apk.
+            - Each architecture/SDK ZIP includes the matching installation guide.
+            - Verify downloads with sha256sum -c SHA256SUMS.
+            ${{ inputs.text }}
+          files: |
+            release/*.zip
+            release/SHA256SUMS
+          fail_on_unmatched_files: true

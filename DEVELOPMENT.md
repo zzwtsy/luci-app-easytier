@@ -64,5 +64,8 @@ make package/feeds/easytier/luci-app-easytier/compile V=s
 - 菜单和 ACL JSON 可解析。
 - JavaScript 文件可解析，LuCI 模块名和文件路径匹配。
 - 翻译通过 `msgfmt --check`。
+- `tests/firewall.sh` 覆盖默认拒绝、本机访问开关、四种转发方向、总开关清理、幂等更新和旧配置迁移。
+- `tests/check-arch-mapping.sh` 核对 ARM soft-float/hard-float 与其他受支持架构的上游资产映射。
+- PR smoke 运行静态检查和 8 个代表目标 × 3 个 SDK；手动完整构建覆盖 22 个目标 × 3 个 SDK。
 - 在 OpenWrt SDK 中分别构建 LuCI 包与核心包，确认目标架构和包格式。
 - 在设备上核对服务启动/停止、UCI 保存、自动接口/防火墙开关、TOML 启动、上传校验和 Web 数据库重置。

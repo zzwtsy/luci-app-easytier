@@ -64,5 +64,8 @@ The `easytier` package can include the embedded Web Console; `easytier-noweb` om
 - Menu and ACL JSON parse successfully.
 - JavaScript parses and LuCI module names match their file paths.
 - Translations pass `msgfmt --check`.
+- `tests/firewall.sh` covers the default deny policy, router input, all forwarding directions, cleanup, idempotence, and legacy migration.
+- `tests/check-arch-mapping.sh` checks ARM soft-float/hard-float and other supported asset mappings.
+- PR smoke runs static checks and 8 representative targets × 3 SDKs; the manual full build covers 22 targets × 3 SDKs.
 - Build the LuCI and core packages in an OpenWrt SDK; confirm target architecture and package format.
 - On a device, check service start/stop, UCI saves, independent interface/firewall toggles, TOML startup, upload validation, and Web database reset.

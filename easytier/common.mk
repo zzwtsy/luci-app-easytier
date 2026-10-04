@@ -1,19 +1,7 @@
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-# OpenWrt 的目标架构名称与 EasyTier 发布包名称并不完全相同，在此统一映射。
-ifeq ($(ARCH),arm)
-	ifneq ($(filter arm_cortex-a%,$(ARCH_PACKAGES)),)
-		APP_ARCH:=armv7
-	else
-		APP_ARCH:=arm
-	endif
-else ifneq ($(filter aarch64 arm64 armv8,$(ARCH)),)
-	APP_ARCH:=aarch64
-else ifneq ($(filter mips mipsel x86_64,$(ARCH)),)
-	APP_ARCH:=$(ARCH)
-else
-	$(error Unsupported EasyTier OpenWrt architecture: ARCH=$(ARCH), ARCH_PACKAGES=$(ARCH_PACKAGES))
-endif
+EASYTIER_COMMON_DIR:=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+include $(EASYTIER_COMMON_DIR)arch.mk
 
 PKG_SOURCE:=easytier-linux-$(APP_ARCH)-v$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://github.com/EasyTier/EasyTier/releases/download/v$(PKG_VERSION)
@@ -26,8 +14,12 @@ ifeq ($(PKG_VERSION),2.6.4)
 		PKG_HASH:=f533ec25a7ea714e09f645615012200278058525795cc3bb690ff011aec1a70f
 	else ifeq ($(APP_ARCH),arm)
 		PKG_HASH:=6d2bd44507d7183a4fa9857ced8f89cb4eddc99cdfc8f8ddef5cc78f52caf2fd
+	else ifeq ($(APP_ARCH),armhf)
+		PKG_HASH:=526cff8b0495ff0025d4fdbf3bd22d46d88c10a3aad94c30af991ff9a1869f3e
 	else ifeq ($(APP_ARCH),armv7)
 		PKG_HASH:=93b1d2831e45db1fd3ca1d8d68c191b300bd69d331ca1858394a0cf884363cc3
+	else ifeq ($(APP_ARCH),armv7hf)
+		PKG_HASH:=af0186ce95ffbe90b0e9dc8df0e9a01563f59e94ea52212651950c34dc35ac37
 	else ifeq ($(APP_ARCH),mips)
 		PKG_HASH:=3b4d084aa922a4b23f5d0167b9bb4966c1593f5184061f7ff075132a2207a260
 	else ifeq ($(APP_ARCH),mipsel)

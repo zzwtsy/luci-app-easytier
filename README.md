@@ -15,7 +15,15 @@ OpenWrt LuCI 插件，用于配置和管理 [EasyTier](https://github.com/EasyTi
 
 ## 安装
 
-从项目 Releases 下载与设备架构匹配的 APK。核心程序包和 LuCI 插件需要分别安装：
+从项目 Releases 下载与设备架构和 OpenWrt 版本匹配的安装包。24.10 使用 IPK，25.12 及更新版本使用 APK。核心程序包和 LuCI 插件需要分别安装：
+
+OpenWrt 24.10：
+
+```sh
+opkg install /tmp/easytier_*.ipk /tmp/luci-app-easytier_*.ipk
+```
+
+OpenWrt 25.12 及更新版本：
 
 ```sh
 apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk
