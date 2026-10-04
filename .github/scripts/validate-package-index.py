@@ -34,7 +34,9 @@ elif mode == "apk":
             "name": item.get("name", ""),
             "filename": f"{item.get('name', '')}-{item.get('version', '')}.apk",
             "size": int(item.get("file-size", -1)),
-            "sha256": item.get("hashes", ""),
+            # APK's `hashes` field is its package identity, not a SHA256 of
+            # the complete .apk file. `apk verify` checks the archive itself.
+            "sha256": None,
         }
         for item in data.get("packages", [])
     ]
@@ -51,9 +53,10 @@ for item in packages:
         raise SystemExit(f"Index references a missing or unsafe package: {filename}")
     if package.stat().st_size != item["size"]:
         raise SystemExit(f"Package size mismatch: {filename}")
-    digest = hashlib.sha256(package.read_bytes()).hexdigest()
-    if digest != item["sha256"]:
-        raise SystemExit(f"Package SHA256 mismatch: {filename}")
+    if item["sha256"] is not None:
+        digest = hashlib.sha256(package.read_bytes()).hexdigest()
+        if digest != item["sha256"]:
+            raise SystemExit(f"Package SHA256 mismatch: {filename}")
 
 missing = required - found
 if missing:
