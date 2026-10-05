@@ -7,6 +7,33 @@ English | [简体中文](README.md)
 
 A LuCI application for configuring and managing [EasyTier](https://github.com/EasyTier/EasyTier) on OpenWrt.
 
+## UI preview
+
+![EasyTier overview and program management](docs/image/Overview.png)
+
+<details>
+<summary>View settings, diagnostics, configuration file, and Web Console pages</summary>
+
+![EasyTier settings](docs/image/Settings.png)
+
+![EasyTier diagnostics](docs/image/Diagnostics.png)
+
+![EasyTier configuration file](docs/image/ConfigurationFile.png)
+
+![EasyTier Web Console settings](docs/image/WebConsole.png)
+
+</details>
+
+## Differences from upstream
+
+This project is based on the [official EasyTier LuCI project](https://github.com/EasyTier/luci-app-easytier) and targets OpenWrt 24.10 and later. EasyTier Core comes from [official releases](https://github.com/EasyTier/EasyTier/releases); this repository focuses on the LuCI integration, service management, and OpenWrt package build and distribution.
+
+- **LuCI and platform support:** Uses LuCI JavaScript views and rpcd ACLs, targeting OpenWrt 24.10, 25.12, and later. The upstream project centers on the legacy LuCI Lua architecture and lists support for OpenWrt 18.06 through 26.x.
+- **Build and distribution:** Pins the EasyTier version for each target architecture and verifies its SHA256 during the build. It also provides signed IPK/APK package feeds. Devices update the core through the package manager; the service does not download binaries at startup.
+- **Runtime maintenance:** Optionally checks configured IPv4 targets and restarts EasyTier Core when all targets are unreachable.
+
+UCI configuration, TOML editing, peer diagnostics, binary upload, and Web Console management overlap with the upstream project. The main differences are the OpenWrt integration and package maintenance workflows.
+
 ## Supported platforms
 
 - OpenWrt 24.10, 25.12, and later, including Snapshot.

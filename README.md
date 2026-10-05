@@ -7,6 +7,33 @@
 
 OpenWrt LuCI 插件，用于配置和管理 [EasyTier](https://github.com/EasyTier/EasyTier)。
 
+## 界面预览
+
+![EasyTier 概览和程序管理](docs/image/Overview.png)
+
+<details>
+<summary>查看设置、诊断、配置文件和 Web 控制台页面</summary>
+
+![EasyTier 设置](docs/image/Settings.png)
+
+![EasyTier 诊断](docs/image/Diagnostics.png)
+
+![EasyTier 配置文件](docs/image/ConfigurationFile.png)
+
+![EasyTier Web 控制台设置](docs/image/WebConsole.png)
+
+</details>
+
+## 与上游项目的区别
+
+本项目基于 [EasyTier 官方 LuCI 项目](https://github.com/EasyTier/luci-app-easytier)，面向 OpenWrt 24.10 及以上版本。EasyTier Core 使用 [官方发布版](https://github.com/EasyTier/EasyTier/releases)，本项目主要维护 OpenWrt 侧的 LuCI 集成、服务管理和软件包构建与分发。
+
+- **LuCI 与平台支持：** 使用 LuCI JavaScript 页面和 rpcd ACL，目标为 OpenWrt 24.10、25.12 及更新版本。上游项目以 LuCI Lua 旧架构为主，并列出 OpenWrt 18.06 至 26.x 的支持范围。
+- **构建与分发：** 按目标架构固定 EasyTier 版本并在构建时校验 SHA256；另提供带签名的 IPK/APK 软件源。设备通过包管理器更新核心程序，服务启动时不会联网下载程序。
+- **运行维护：** 可选检查配置的 IPv4 目标；全部目标都不可达时重启 EasyTier Core。
+
+UCI 配置、TOML 编辑、节点诊断、程序上传和 Web 控制台管理等使用场景与上游项目有重合；本项目的主要差异在 OpenWrt 集成方式和软件包维护流程。
+
 ## 支持范围
 
 - OpenWrt 24.10、25.12 及更新版本，包括 Snapshot。
