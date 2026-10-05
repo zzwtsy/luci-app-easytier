@@ -40,8 +40,9 @@ Signed feed packages are built for matching OpenWrt 24.10.8 and 25.12.5 SDKs. Ea
 OpenWrt 24.10.8:
 
 ```sh
+. /etc/openwrt_release
 FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
-ARCH=x86_64 # replace with your device architecture
+ARCH="$DISTRIB_ARCH"
 wget -O /tmp/easytier-opkg.pub "$FEED_BASE/keys/easytier-opkg.pub"
 opkg-key add /tmp/easytier-opkg.pub
 echo "src/gz easytier $FEED_BASE/feeds/24.10.8/$ARCH/packages_ci" >> /etc/opkg/customfeeds.conf
@@ -52,9 +53,9 @@ opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 OpenWrt 25.12.5:
 
 ```sh
+. /etc/openwrt_release
 FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
-ARCH=x86_64 # replace with your device architecture
-mkdir -p /etc/apk/keys
+ARCH="$DISTRIB_ARCH"
 wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
 echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
 apk update
