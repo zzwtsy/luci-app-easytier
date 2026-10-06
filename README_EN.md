@@ -91,6 +91,44 @@ apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
 
 For storage-constrained devices or when the embedded Web Console is not needed, replace `easytier` with `easytier-noweb`. The two core packages conflict. Update feed-installed packages with the corresponding package manager. Manual upload is for custom builds and custom binary paths.
 
+### Update and rollback
+
+When updating from the GitHub Pages feed, update only EasyTier packages; do not perform a bulk system upgrade. On OpenWrt 24.10:
+
+```sh
+opkg update
+opkg upgrade easytier luci-app-easytier
+```
+
+On OpenWrt 25.12 and later:
+
+```sh
+apk update
+apk upgrade easytier luci-app-easytier
+```
+
+If you installed `easytier-noweb`, replace `easytier` in the command with `easytier-noweb`. If the Chinese translation package is installed, you can also add `luci-i18n-easytier-zh-cn` to the update command. To roll back, choose an older ZIP from Releases that matches your device architecture and OpenWrt SDK, verify it against the Release's `SHA256SUMS`, and extract it to `/tmp/easytier-rollback/`. Make sure the directory contains only packages from that rollback. On 24.10:
+
+```sh
+mkdir -p /tmp/easytier-rollback
+cd /tmp/easytier-rollback
+opkg --force-downgrade install ./easytier_*.ipk ./luci-app-easytier_*.ipk
+```
+
+On 25.12 and later:
+
+```sh
+mkdir -p /tmp/easytier-rollback
+cd /tmp/easytier-rollback
+apk add --allow-untrusted ./easytier-*.apk ./luci-app-easytier-*.apk
+```
+
+For `easytier-noweb`, use the matching `easytier-noweb` package file. Add the matching `.ipk` or `.apk` to the command if you also need to roll back the Chinese translation. A local APK rollback records the exact package file version. To return those packages to the feed versions, update the index and run `apk upgrade --available` for those package names only. Keep the package names in the command so other system packages are not affected.
+
+Package rollback does not undo committed changes in `/etc/config/easytier` or `/etc/config/firewall`, and it does not restore a custom binary previously uploaded through LuCI. Back up configuration first and upload the desired custom binary separately if needed. On the first firewall configuration load after an upgrade, if `allow_router_input` is unset, a legacy `auto_config_firewall=1` migrates to enabled and any other old value migrates to disabled; a missing legacy option defaults to enabled, and an existing new option is preserved. The migration marker prevents later starts from overwriting the setting.
+
+See the OpenWrt [opkg documentation](https://openwrt.org/docs/guide-user/additional-software/opkg) and [apk documentation](https://openwrt.org/docs/guide-user/additional-software/apk) for more command options.
+
 ## Features
 
 - Configure EasyTier CLI options through UCI forms or edit the TOML configuration file.

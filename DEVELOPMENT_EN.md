@@ -60,6 +60,27 @@ Install ShellCheck and GNU gettext on the host first. The ARM ABI check download
 - Keep source verification enabled in release builds. Do not download binaries on the device or skip checksum verification.
 - Map ARM packages to the upstream ARM or ARMv7 asset using OpenWrt's `ARCH_PACKAGES` value.
 
+## Maintenance and release workflows
+
+### Updating EasyTier Core
+
+1. Choose a new EasyTier upstream release, check each asset architecture against `easytier/arch.mk`, and calculate the SHA256 for every mapped asset.
+2. Update `EASYTIER_DEFAULT_VERSION` and all `EASYTIER_HASH_*` values for that release in `version.mk`. Do not update only the architecture available on your own device.
+3. `EASYTIER_VERSION` and `LUCI_APP_VERSION` serve different purposes. A build-only check can change only the Core version. To publish packages containing the new Core, also increment `LUCI_APP_VERSION`, which versions the LuCI package and repository Release tag.
+4. Run `npm run check`, the architecture mapping checks, and `.github/scripts/check-arm-abi.sh`. For a release, manually run `build.yml` from the repository default branch, enter a tag matching `LUCI_APP_VERSION` (optional `v` prefix), and select `all`. PR smoke covers 8 representative architectures × 3 SDKs; a full release builds 22 architectures × 3 SDKs.
+
+### Adding an SDK or architecture
+
+Review `config/build-targets.json`, `easytier/arch.mk`, the manual architecture choices in `build.yml`, and SDK version references in the READMEs and generated package guide. `npm run check` verifies that the target manifest and manual architecture choices agree. For a new architecture, also verify its upstream asset mapping and ABI.
+
+### Package feed signing keys
+
+The `OPKG_FEED_SIGNING_KEY` GitHub secret pairs with `.github/pages/keys/easytier-opkg.pub`; `APK_FEED_SIGNING_KEY` pairs with `.github/pages/keys/easytier-apk.pem`. Both private-key secrets are required for releases and signed-index verification. Devices store their trusted public keys locally, so changing a repository public key does not update device trust automatically. Key rotation requires a separate device migration plan; this guide does not change the current signing workflow.
+
+### First-start firewall configuration migration
+
+When the service loads firewall configuration, if `firewall_input_migration_version` is not `1` and `allow_router_input` is unset, the plugin maps a legacy `auto_config_firewall` value of `1` to `1` and any other value to `0`; a missing legacy option defaults to `1`. An existing `allow_router_input` value is preserved. The migration then writes the marker and commits the `easytier` UCI package, so later starts do not overwrite the user's choice. `tests/firewall.sh` covers this behavior.
+
 The manual upload helper accepts only the supported EasyTier filenames. It validates archive paths before extracting to a temporary directory. Each target ELF must have a valid file header and return EasyTier version information within a timeout. All files are staged and checked before replacement; a failed replacement restores the previous files.
 
 ## Local build

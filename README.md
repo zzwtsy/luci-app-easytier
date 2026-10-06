@@ -91,6 +91,44 @@ apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
 
 空间有限或不需要内嵌 Web 控制台时，将 `easytier` 替换为 `easytier-noweb`。两个核心包互相冲突。软件源安装的程序通过对应的包管理器更新；手动上传适用于自定义构建或自定义程序路径。
 
+### 升级与回退
+
+从 GitHub Pages 软件源更新时，只更新 EasyTier 相关包，不要对整个系统执行批量升级。OpenWrt 24.10：
+
+```sh
+opkg update
+opkg upgrade easytier luci-app-easytier
+```
+
+OpenWrt 25.12 及更新版本：
+
+```sh
+apk update
+apk upgrade easytier luci-app-easytier
+```
+
+如果安装的是 `easytier-noweb`，将命令中的 `easytier` 换成 `easytier-noweb`。如果已安装中文翻译包，也可将 `luci-i18n-easytier-zh-cn` 加入更新命令。回退时，从项目 Releases 选择与设备架构和 OpenWrt SDK 匹配的旧版 ZIP，先按 Release 中的 `SHA256SUMS` 校验归档，再解压到 `/tmp/easytier-rollback/`，并确保该目录只包含这次回退的包。24.10 使用：
+
+```sh
+mkdir -p /tmp/easytier-rollback
+cd /tmp/easytier-rollback
+opkg --force-downgrade install ./easytier_*.ipk ./luci-app-easytier_*.ipk
+```
+
+25.12 及更新版本使用：
+
+```sh
+mkdir -p /tmp/easytier-rollback
+cd /tmp/easytier-rollback
+apk add --allow-untrusted ./easytier-*.apk ./luci-app-easytier-*.apk
+```
+
+使用 `easytier-noweb` 时，将核心包文件改为对应的 `easytier-noweb` 文件。如果回退中文翻译包，也将它的 `.ipk` 或 `.apk` 加到安装命令中。APK 从本地文件回退后会记录该文件的精确版本；要恢复为软件源版本，可更新索引并对这些指定包执行 `apk upgrade --available`。不要省略包名，以免影响其他系统软件。
+
+包回退不会撤销已提交的 `/etc/config/easytier` 或 `/etc/config/firewall` 变更，也不会恢复之前通过 LuCI 上传的自定义程序；需要时请先备份配置并单独上传所需程序。升级后首次加载防火墙配置时，如果 `allow_router_input` 尚未设置，旧 `auto_config_firewall=1` 会迁移为启用，其他旧值迁移为关闭；旧选项缺失时按启用处理，已有新选项会保留。迁移标记会阻止后续启动再次覆盖设置。
+
+更多命令选项见 OpenWrt 的 [opkg 文档](https://openwrt.org/docs/guide-user/additional-software/opkg) 和 [apk 文档](https://openwrt.org/docs/guide-user/additional-software/apk)。
+
 ## 功能
 
 - 使用 UCI 表单配置 EasyTier 命令行参数，或编辑 TOML 配置文件。
