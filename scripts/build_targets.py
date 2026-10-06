@@ -107,7 +107,12 @@ def build_matrix(data: dict[str, Any], kind: str, selected: str = "all") -> list
     else:
         raise ValueError(f"unsupported matrix kind: {kind}")
     return [
-        {"arch": arch, "sdk": sdk["version"], "stable": sdk["stable"]}
+        {
+            "arch": arch,
+            "sdk": sdk["version"],
+            "package_format": sdk["package_format"],
+            "stable": sdk["stable"],
+        }
         for arch in architectures
         for sdk in sdks
     ]

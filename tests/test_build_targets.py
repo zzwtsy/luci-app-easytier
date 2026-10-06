@@ -30,6 +30,8 @@ class BuildTargetTests(unittest.TestCase):
     def test_release_matrix_has_expected_product(self) -> None:
         matrix = build_targets.build_matrix(self.manifest, "release")
         self.assertEqual(len(matrix), len(self.manifest["release_architectures"]) * len(self.manifest["sdks"]))
+        formats = {sdk["version"]: sdk["package_format"] for sdk in self.manifest["sdks"]}
+        self.assertTrue(all(item["package_format"] == formats[item["sdk"]] for item in matrix))
 
     def test_pr_matrix_contains_eight_architectures_for_each_sdk(self) -> None:
         matrix = build_targets.build_matrix(self.manifest, "pr-priority") + build_targets.build_matrix(

@@ -23,7 +23,9 @@ check_asset() {
 	local binary="$extract/easytier-core"
 	local flags
 
-	curl -fsSL "https://github.com/EasyTier/EasyTier/releases/download/v$VERSION/easytier-linux-$asset-v$VERSION.zip" -o "$archive"
+	curl -fsSL --connect-timeout 20 --max-time 180 --retry 3 --retry-delay 2 \
+		--retry-connrefused --retry-max-time 600 \
+		"https://github.com/EasyTier/EasyTier/releases/download/v$VERSION/easytier-linux-$asset-v$VERSION.zip" -o "$archive"
 	printf '%s  %s\n' "$expected_hash" "$archive" | sha256sum -c -
 	mkdir -p "$extract"
 	local member

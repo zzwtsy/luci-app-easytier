@@ -69,8 +69,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
           BUILD_ARCH: ${{ inputs.architecture }}
           VERIFY_SIGNED_INDEXES: ${{ inputs.verify_signed_indexes }}
-          OPKG_FEED_SIGNING_KEY: ${{ secrets.OPKG_FEED_SIGNING_KEY }}
-          APK_FEED_SIGNING_KEY: ${{ secrets.APK_FEED_SIGNING_KEY }}
+          OPKG_SIGNING_KEY_AVAILABLE: ${{ secrets.OPKG_FEED_SIGNING_KEY != '' }}
+          APK_SIGNING_KEY_AVAILABLE: ${{ secrets.APK_FEED_SIGNING_KEY != '' }}
         run: |
           set -euo pipefail
           if [[ -n "$RELEASE_TAG" ]]; then
@@ -92,7 +92,7 @@ jobs:
             fi
           fi
           if [[ -n "$RELEASE_TAG" || "$VERIFY_SIGNED_INDEXES" == "true" ]]; then
-            if [[ -z "$OPKG_FEED_SIGNING_KEY" || -z "$APK_FEED_SIGNING_KEY" ]]; then
+            if [[ "$OPKG_SIGNING_KEY_AVAILABLE" != "true" || "$APK_SIGNING_KEY_AVAILABLE" != "true" ]]; then
               echo "::error::Signed feed verification requires OPKG_FEED_SIGNING_KEY and APK_FEED_SIGNING_KEY repository secrets."
               exit 1
             fi
@@ -119,8 +119,8 @@ jobs:
           # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
           PACKAGES: easytier easytier-noweb luci-app-easytier
           INDEX: 1
-          KEY_BUILD: ${{ secrets.OPKG_FEED_SIGNING_KEY }}
-          PRIVATE_KEY: ${{ secrets.APK_FEED_SIGNING_KEY }}
+          KEY_BUILD: ${{ matrix.package_format == 'ipk' && secrets.OPKG_FEED_SIGNING_KEY || '' }}
+          PRIVATE_KEY: ${{ matrix.package_format == 'apk' && secrets.APK_FEED_SIGNING_KEY || '' }}
           NO_REFRESH_CHECK: 1
           V: s
       - name: Verify package outputs and generate SDK-specific guide
