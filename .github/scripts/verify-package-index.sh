@@ -6,8 +6,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 KEY_DIR="$ROOT/.github/pages/keys"
 
-case "$SDK" in
-	24.10.*)
+	extension="$(python3 "$ROOT/scripts/build_targets.py" sdk-field "$SDK" package_format)"
+stable="$(python3 "$ROOT/scripts/build_targets.py" sdk-field "$SDK" stable)"
+[[ "$stable" == true ]] || {
+	echo "Signed feed verification is not configured for unstable SDK $SDK" >&2
+	exit 1
+}
+
+case "$extension" in
+	ipk)
 		[[ -s "$PACKAGE_DIR/Packages" && -s "$PACKAGE_DIR/Packages.gz" && -s "$PACKAGE_DIR/Packages.sig" ]] || {
 			echo "Missing signed opkg feed index for SDK $SDK" >&2
 			exit 1
@@ -16,7 +23,7 @@ case "$SDK" in
 		key_mount="$public_key:/keys/easytier-opkg.pub:ro"
 		docker_command='gzip -dc /feed/Packages.gz > /tmp/Packages && /builder/staging_dir/host/bin/usign -V -q -m /tmp/Packages -p /keys/easytier-opkg.pub -x /feed/Packages.sig'
 		;;
-	25.12.*)
+	apk)
 		[[ -s "$PACKAGE_DIR/packages.adb" ]] || {
 			echo "Missing apk packages.adb for SDK $SDK" >&2
 			exit 1
@@ -36,7 +43,7 @@ esac
 	exit 1
 }
 
-if [[ "$SDK" == 24.10.* ]]; then
+if [[ "$extension" == ipk ]]; then
 	docker run --rm \
 		--entrypoint /bin/sh \
 		-v "$PACKAGE_DIR:/feed:ro" \

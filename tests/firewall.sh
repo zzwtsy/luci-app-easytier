@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=luci-app-easytier/root/usr/share/easytier/firewall.sh
 . "$ROOT/luci-app-easytier/root/usr/share/easytier/firewall.sh"
 
 declare -A UCI_STATE=()

@@ -11,32 +11,17 @@ ifneq ($(strip $(APP_ARCH)),)
 PKG_SOURCE:=easytier-linux-$(APP_ARCH)-v$(PKG_VERSION).zip
 PKG_SOURCE_URL:=https://github.com/EasyTier/EasyTier/releases/download/v$(PKG_VERSION)
 
-# 固定上游版本使用逐架构校验和；覆盖版本时必须由调用方提供对应摘要。
-ifeq ($(PKG_VERSION),2.6.4)
-	ifeq ($(APP_ARCH),aarch64)
-		PKG_HASH:=f533ec25a7ea714e09f645615012200278058525795cc3bb690ff011aec1a70f
-	else ifeq ($(APP_ARCH),arm)
-		PKG_HASH:=6d2bd44507d7183a4fa9857ced8f89cb4eddc99cdfc8f8ddef5cc78f52caf2fd
-	else ifeq ($(APP_ARCH),armhf)
-		PKG_HASH:=526cff8b0495ff0025d4fdbf3bd22d46d88c10a3aad94c30af991ff9a1869f3e
-	else ifeq ($(APP_ARCH),armv7)
-		PKG_HASH:=93b1d2831e45db1fd3ca1d8d68c191b300bd69d331ca1858394a0cf884363cc3
-	else ifeq ($(APP_ARCH),armv7hf)
-		PKG_HASH:=af0186ce95ffbe90b0e9dc8df0e9a01563f59e94ea52212651950c34dc35ac37
-	else ifeq ($(APP_ARCH),mips)
-		PKG_HASH:=3b4d084aa922a4b23f5d0167b9bb4966c1593f5184061f7ff075132a2207a260
-	else ifeq ($(APP_ARCH),mipsel)
-		PKG_HASH:=7c93bcc9e9276f102b5299b0773941db7fd1d99ad04bac42b479a0d979ef5220
-	else ifeq ($(APP_ARCH),x86_64)
-		PKG_HASH:=61b659eaedba658fa66fe47d17e1426cdd77e5d02fa15fed447bb4357c09dfd6
-	else
-		$(error No SHA256 is configured for APP_ARCH=$(APP_ARCH))
-	endif
+# Fixed release hashes are stored in version.mk. Any other version requires a caller-supplied hash.
+ifeq ($(PKG_VERSION),$(EASYTIER_DEFAULT_VERSION))
+PKG_HASH:=$(EASYTIER_HASH_$(APP_ARCH))
+ifeq ($(strip $(PKG_HASH)),)
+$(error No SHA256 is configured for APP_ARCH=$(APP_ARCH))
+endif
 else
-	ifeq ($(strip $(EASYTIER_HASH)),)
-		$(error Set EASYTIER_HASH to the SHA256 of $(PKG_SOURCE) when overriding EasyTier version)
-	endif
-	PKG_HASH:=$(EASYTIER_HASH)
+ifeq ($(strip $(EASYTIER_HASH)),)
+$(error Set EASYTIER_HASH to the SHA256 of $(PKG_SOURCE) when overriding EasyTier version)
+endif
+PKG_HASH:=$(EASYTIER_HASH)
 endif
 endif
 

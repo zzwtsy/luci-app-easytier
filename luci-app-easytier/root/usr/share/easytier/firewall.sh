@@ -32,10 +32,12 @@ set_rule() {
 	local section="$1" protocol="$2" port="$3"
 	# 端口为空或不合法时清除旧规则，防止配置被移除后仍意外暴露服务。
 	case "$port" in ''|*[!0-9]*) uci -q delete "firewall.$section"; return 0 ;; esac
-	[ "${#port}" -le 5 ] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ] || {
+	if [ "${#port}" -le 5 ] && [ "$port" -ge 1 ] && [ "$port" -le 65535 ]; then
+		:
+	else
 		uci -q delete "firewall.$section"
 		return 0
-	}
+	fi
 	set_type firewall "$section" rule
 	set_option firewall "$section" name "$section"
 	set_option firewall "$section" target ACCEPT
@@ -122,8 +124,16 @@ set_firewall_rules() {
 
 set_web_firewall() {
 	local web_port="$1" api_port="$2" html_port="$3" allow_web="$4" allow_api="$5"
-	[ "$allow_web" = 1 ] && set_rule easytier_webserver 'tcp udp' "$web_port" || uci -q delete firewall.easytier_webserver
-	[ "$allow_api" = 1 ] && set_rule easytier_webapi tcp "$api_port" || uci -q delete firewall.easytier_webapi
+	if [ "$allow_web" = 1 ] && set_rule easytier_webserver 'tcp udp' "$web_port"; then
+		:
+	else
+		uci -q delete firewall.easytier_webserver
+	fi
+	if [ "$allow_api" = 1 ] && set_rule easytier_webapi tcp "$api_port"; then
+		:
+	else
+		uci -q delete firewall.easytier_webapi
+	fi
 	if [ "$allow_api" = 1 ] && [ "$html_port" != "$api_port" ]; then
 		set_rule easytier_webhtml tcp "$html_port"
 	else

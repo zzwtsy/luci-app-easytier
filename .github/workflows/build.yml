@@ -57,7 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.selection.outputs.release_tag }}
-      architectures: ${{ steps.selection.outputs.architectures }}
+      build_matrix: ${{ steps.selection.outputs.build_matrix }}
+      expected_artifact_count: ${{ steps.selection.outputs.expected_artifact_count }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -97,45 +98,7 @@ jobs:
             fi
           fi
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
-          python3 - "$BUILD_ARCH" "$GITHUB_OUTPUT" <<'PY'
-          import json
-          import sys
-
-          all_arches = [
-              "aarch64_cortex-a53",
-              "aarch64_cortex-a72",
-              "aarch64_generic",
-              "arm_arm1176jzf-s_vfp",
-              "arm_arm926ej-s",
-              "arm_cortex-a15_neon-vfpv4",
-              "arm_cortex-a5_vfpv4",
-              "arm_cortex-a7",
-              "arm_cortex-a7_neon-vfpv4",
-              "arm_cortex-a8_vfpv3",
-              "arm_cortex-a9",
-              "arm_cortex-a9_neon",
-              "arm_cortex-a9_vfpv3-d16",
-              "arm_fa526",
-              "arm_xscale",
-              "mips_24kc",
-              "mips_mips32",
-              "mipsel_24kc",
-              "mipsel_24kc_24kf",
-              "mipsel_74kc",
-              "mipsel_mips32",
-              "x86_64",
-          ]
-          requested = sys.argv[1]
-          if requested == "all":
-              selected = all_arches
-          elif requested in all_arches:
-              selected = [requested]
-          else:
-              raise SystemExit(f"Unsupported architecture: {requested}")
-
-          with open(sys.argv[2], "a", encoding="utf-8") as output:
-              output.write("architectures=" + json.dumps(selected, separators=(",", ":")) + "\n")
-          PY
+          python3 scripts/build_targets.py matrix --kind release --selected "$BUILD_ARCH" --github-output "$GITHUB_OUTPUT"
 
   build:
     name: Build ${{ matrix.arch }}-${{ matrix.sdk }}
@@ -143,12 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        arch: ${{ fromJSON(needs.validate.outputs.architectures) }}
-        sdk:
-          - 24.10.8
-          - 25.12.5
-          - SNAPSHOT
+      matrix: ${{ fromJSON(needs.validate.outputs.build_matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -173,7 +131,7 @@ jobs:
           RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
         run: .github/scripts/prepare-package-artifacts.sh
       - name: Verify signed stable package indexes
-        if: ${{ (needs.validate.outputs.release_tag != '' || inputs.verify_signed_indexes) && matrix.sdk != 'SNAPSHOT' }}
+        if: ${{ (needs.validate.outputs.release_tag != '' || inputs.verify_signed_indexes) && matrix.stable == true }}
         env:
           PACKAGE_DIR: ${{ github.workspace }}/bin/packages/${{ matrix.arch }}/packages_ci
           SDK: ${{ matrix.sdk }}
@@ -200,6 +158,7 @@ jobs:
       cancel-in-progress: false
     env:
       RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
+      EXPECTED_ARTIFACT_COUNT: ${{ needs.validate.outputs.expected_artifact_count }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -215,18 +174,16 @@ jobs:
           shopt -s nullglob
           mkdir -p release
           artifact_dirs=(artifacts/*)
-          [[ ${#artifact_dirs[@]} -eq 66 ]] || {
-            echo "::error::Expected 66 build artifacts, found ${#artifact_dirs[@]}."
+          [[ ${#artifact_dirs[@]} -eq $EXPECTED_ARTIFACT_COUNT ]] || {
+            echo "::error::Expected $EXPECTED_ARTIFACT_COUNT build artifacts, found ${#artifact_dirs[@]}."
             exit 1
           }
           archives=()
           for dir in "${artifact_dirs[@]}"; do
             name="${dir##*/}"
-            case "$name" in
-              *-24.10.8) extension=ipk; package_separator=_ ;;
-              *-25.12.5|*-SNAPSHOT) extension=apk; package_separator=- ;;
-              *) echo "::error::Unknown SDK in artifact $name."; exit 1 ;;
-            esac
+            sdk="${name##*-}"
+            extension="$(python3 scripts/build_targets.py sdk-field "$sdk" package_format)"
+            package_separator="$(python3 scripts/build_targets.py sdk-field "$sdk" package_separator)"
             packages=("$dir"/*."$extension")
             guide="$dir/README_PACKAGE.md"
             [[ -f "$guide" ]] || {
@@ -248,8 +205,8 @@ jobs:
             }
             archives+=("$archive")
           done
-          [[ ${#archives[@]} -eq 66 ]] || {
-            echo "::error::Expected 66 release archives, found ${#archives[@]}."
+          [[ ${#archives[@]} -eq $EXPECTED_ARTIFACT_COUNT ]] || {
+            echo "::error::Expected $EXPECTED_ARTIFACT_COUNT release archives, found ${#archives[@]}."
             exit 1
           }
           (cd release && sha256sum ./*.zip > SHA256SUMS && sha256sum -c SHA256SUMS)

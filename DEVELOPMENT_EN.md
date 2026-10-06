@@ -16,6 +16,25 @@ root/etc/init.d/easytier                      procd service definition
 root/usr/share/easytier/firewall.sh            UCI network and firewall management
 ```
 
+## Cross-file change map
+
+When adding or changing a setting, follow its data flow through the repository:
+
+| Change | Files to review together |
+| --- | --- |
+| LuCI setting | The matching form under `htdocs/luci-static/resources/view/easytier/`, defaults in `root/etc/config/easytier`, service logic loaded by `root/etc/init.d/easytier`, `root/usr/share/easytier/firewall.sh` when networking is affected, both gettext catalogs, and the related regression checks |
+| RPC query or management operation | The call in `htdocs/luci-static/resources/easytier/common.js` or its page, the server-side allowlist in `root/usr/libexec/easytier/rpc` or `manage`, the exact permission in `root/usr/share/rpcd/acl.d/luci-app-easytier.json`, and the RPC contract check |
+| Package version, checksum, or build target | `version.mk`, `config/build-targets.json`, shared check scripts, and `.github/workflows/`; do not duplicate target lists in workflow code |
+
+Run the common checks after a cross-file change:
+
+```sh
+npm ci
+npm run check
+```
+
+Install ShellCheck and GNU gettext on the host first. The ARM ABI check downloads upstream assets and runs separately in CI: `.github/scripts/check-arm-abi.sh`.
+
 ## LuCI pages and permissions
 
 - Use LuCI's native modules for UCI, file access, and fixed helper operations. Do not add a frontend framework or build step.
@@ -36,7 +55,7 @@ root/usr/share/easytier/firewall.sh            UCI network and firewall manageme
 `easytier/Makefile` and `easytier-noweb/Makefile` share `easytier/common.mk`. Packages use OpenWrt's download and checksum flow with the upstream asset name `easytier-linux-<arch>-v<version>.zip`.
 
 - `EASYTIER_VERSION` pins the upstream core binary; `LUCI_APP_VERSION` versions the LuCI package and repository release tag.
-- The default upstream core version and per-architecture SHA256 hashes are kept in `version.mk` and `easytier/common.mk`.
+- The default upstream core version, LuCI version, and per-architecture SHA256 hashes are centralized in `version.mk`.
 - A custom core version must set both `EASYTIER_VERSION` and `EASYTIER_HASH`; the build should fail when the checksum is missing.
 - Keep source verification enabled in release builds. Do not download binaries on the device or skip checksum verification.
 - Map ARM packages to the upstream ARM or ARMv7 asset using OpenWrt's `ARCH_PACKAGES` value.
@@ -61,12 +80,10 @@ The `easytier` package can include the embedded Web Console; `easytier-noweb` om
 
 ## Before submitting
 
-- Shell scripts pass `sh -n`.
-- Menu and ACL JSON parse successfully.
-- JavaScript parses and LuCI module names match their file paths.
-- Translations pass `msgfmt --check`.
+- `npm run check` runs ESLint, ShellCheck, shell syntax checks, JSON validation, gettext format and translation-key checks, and host-side regression checks.
 - `tests/firewall.sh` covers the default deny policy, router input, all forwarding directions, cleanup, idempotence, and legacy migration.
 - `tests/check-arch-mapping.sh` checks ARM soft-float/hard-float and other supported asset mappings.
+- `.github/scripts/check-arm-abi.sh` downloads EasyTier ARM assets and checks their pinned SHA256 hashes and ELF ABI; CI runs it separately.
 - PR smoke runs static checks and 8 representative targets × 3 SDKs; the manual full build covers 22 targets × 3 SDKs.
 - Build the LuCI and core packages in an OpenWrt SDK; confirm target architecture and package format.
 - On a device, check service start/stop, UCI saves, independent interface/firewall toggles, TOML startup, upload validation, and Web database reset.

@@ -2,9 +2,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-VERSION="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' "$ROOT/version.mk")"
+VERSION="$(awk -F= '$1 == "EASYTIER_DEFAULT_VERSION:" { print $2; exit }' "$ROOT/version.mk")"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+
+hash_for_asset() {
+	local key="EASYTIER_HASH_$1" hash
+	hash="$(awk -F':=' -v key="$key" '$1 == key { print $2; exit }' "$ROOT/version.mk")"
+	[[ "$hash" =~ ^[[:xdigit:]]{64}$ ]] || {
+		echo "Missing or invalid SHA256 for EasyTier asset $1 in version.mk" >&2
+		return 1
+	}
+	printf '%s\n' "$hash"
+}
 
 check_asset() {
 	local asset="$1" expected_hash="$2" expected_float="$3"
@@ -36,7 +46,7 @@ check_asset() {
 	echo "$asset: $flags"
 }
 
-check_asset arm 6d2bd44507d7183a4fa9857ced8f89cb4eddc99cdfc8f8ddef5cc78f52caf2fd soft
-check_asset armhf 526cff8b0495ff0025d4fdbf3bd22d46d88c10a3aad94c30af991ff9a1869f3e hard
-check_asset armv7 93b1d2831e45db1fd3ca1d8d68c191b300bd69d331ca1858394a0cf884363cc3 soft
-check_asset armv7hf af0186ce95ffbe90b0e9dc8df0e9a01563f59e94ea52212651950c34dc35ac37 hard
+check_asset arm "$(hash_for_asset arm)" soft
+check_asset armhf "$(hash_for_asset armhf)" hard
+check_asset armv7 "$(hash_for_asset armv7)" soft
+check_asset armv7hf "$(hash_for_asset armv7hf)" hard

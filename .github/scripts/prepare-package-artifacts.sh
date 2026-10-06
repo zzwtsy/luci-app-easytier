@@ -16,30 +16,28 @@ case "$REQUIRE_PACKAGE_INDEX" in
 	*) echo "REQUIRE_PACKAGE_INDEX must be 0 or 1" >&2; exit 1 ;;
 esac
 
-case "$SDK" in
-	24.10.*)
-		extension=ipk
-		package_separator=_
+extension="$(python3 "$ROOT/scripts/build_targets.py" sdk-field "$SDK" package_format)"
+package_separator="$(python3 "$ROOT/scripts/build_targets.py" sdk-field "$SDK" package_separator)"
+case "$extension" in
+	ipk)
 		manager=opkg
 		standard_install="opkg install /tmp/easytier_*.ipk /tmp/luci-app-easytier_*.ipk /tmp/luci-i18n-easytier-zh-cn_*.ipk"
 		noweb_install="opkg install /tmp/easytier-noweb_*.ipk /tmp/luci-app-easytier_*.ipk /tmp/luci-i18n-easytier-zh-cn_*.ipk"
 		luci_install="opkg install /tmp/luci-app-easytier_*.ipk /tmp/luci-i18n-easytier-zh-cn_*.ipk"
 		;;
-	25.12.*|SNAPSHOT)
-		extension=apk
-		package_separator=-
+	apk)
 		manager=apk
 		standard_install="apk add --allow-untrusted /tmp/easytier-*.apk /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
 		noweb_install="apk add --allow-untrusted /tmp/easytier-noweb-*.apk /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
 		luci_install="apk add --allow-untrusted /tmp/luci-app-easytier-*.apk /tmp/luci-i18n-easytier-zh-cn-*.apk"
 		;;
 	*)
-		echo "Unsupported SDK version: $SDK" >&2
+		echo "Unsupported package format for SDK $SDK: $extension" >&2
 		exit 1
 		;;
 esac
 
-EASYTIER_VERSION="$(awk -F= '$1 == "EASYTIER_VERSION" { print $2; exit }' "$ROOT/version.mk")"
+EASYTIER_VERSION="$(awk -F= '$1 == "EASYTIER_DEFAULT_VERSION:" { print $2; exit }' "$ROOT/version.mk")"
 LUCI_APP_VERSION="$(awk -F= '$1 == "LUCI_APP_VERSION" { print $2; exit }' "$ROOT/version.mk")"
 [[ -n "$EASYTIER_VERSION" && -n "$LUCI_APP_VERSION" ]] || {
 	echo "Missing package version in $ROOT/version.mk" >&2
@@ -63,8 +61,8 @@ for package in luci-app-easytier luci-i18n-easytier-zh-cn; do
 done
 
 if [[ "$REQUIRE_PACKAGE_INDEX" == 1 ]]; then
-	case "$SDK" in
-		24.10.*)
+	case "$extension" in
+		ipk)
 			for index in Packages Packages.gz; do
 				if [[ ! -s "$PACKAGE_DIR/$index" ]]; then
 					echo "Missing $index for $BUILD_TARGET in $PACKAGE_DIR" >&2
@@ -76,7 +74,7 @@ if [[ "$REQUIRE_PACKAGE_INDEX" == 1 ]]; then
 				exit 1
 			fi
 			;;
-		25.12.*|SNAPSHOT)
+		apk)
 			if [[ ! -s "$PACKAGE_DIR/packages.adb" ]]; then
 				echo "Missing packages.adb for $BUILD_TARGET in $PACKAGE_DIR" >&2
 				exit 1

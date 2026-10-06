@@ -10,54 +10,41 @@ jobs:
   checks:
     name: Static and regression checks
     runs-on: ubuntu-latest
+    outputs:
+      priority_matrix: ${{ steps.priority.outputs.build_matrix }}
+      remaining_matrix: ${{ steps.remaining.outputs.build_matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 1
-      - name: Check shell syntax
-        run: |
-          set -euo pipefail
-          mapfile -t scripts < <(rg --files luci-app-easytier/root/etc/init.d luci-app-easytier/root/etc/uci-defaults luci-app-easytier/root/usr/libexec luci-app-easytier/root/usr/share/easytier)
-          for script in "${scripts[@]}"; do
-            bash -n "$script"
-            if head -n 1 "$script" | grep -qE '^#!/bin/sh([[:space:]]|$)'; then
-              sh -n "$script"
-            fi
-          done
-          for script in tests/*.sh .github/scripts/*.sh; do bash -n "$script"; done
-      - name: Check JavaScript syntax
-        run: |
-          set -euo pipefail
-          mapfile -t scripts < <(rg --files luci-app-easytier/htdocs -g '*.js')
-          for script in "${scripts[@]}"; do node --check "$script"; done
-      - name: Parse JSON and ACL files
-        run: |
-          python3 -m json.tool luci-app-easytier/root/usr/share/rpcd/acl.d/luci-app-easytier.json >/dev/null
-          python3 -m json.tool luci-app-easytier/root/usr/share/luci/menu.d/luci-app-easytier.json >/dev/null
-      - name: Check translations
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.19.0
+          cache: npm
+      - name: Install static-check tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y gettext
-          msgfmt --check --check-header -o /dev/null luci-app-easytier/po/zh_Hans/easytier.po
-          msgfmt --check-format -o /dev/null luci-app-easytier/po/templates/easytier.pot
-      - name: Check architecture mappings
-        run: tests/check-arch-mapping.sh
+          sudo apt-get install --no-install-recommends -y gettext shellcheck
+      - name: Install development dependencies
+        run: npm ci
+      - name: Run common checks
+        run: npm run check
+      - id: priority
+        name: Generate priority smoke matrix
+        run: python3 scripts/build_targets.py matrix --kind pr-priority --github-output "$GITHUB_OUTPUT"
+      - id: remaining
+        name: Generate remaining smoke matrix
+        run: python3 scripts/build_targets.py matrix --kind pr-remaining --github-output "$GITHUB_OUTPUT"
       - name: Check ARM release ABI
         run: .github/scripts/check-arm-abi.sh
-      - name: Test firewall configuration
-        run: tests/firewall.sh
 
   build-smoke:
-    name: Build smoke x86_64-${{ matrix.sdk }}
+    name: Build smoke ${{ matrix.arch }}-${{ matrix.sdk }}
     needs: checks
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
-      matrix:
-        sdk:
-          - 24.10.8
-          - 25.12.5
-          - SNAPSHOT
+      matrix: ${{ fromJSON(needs.checks.outputs.priority_matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -65,7 +52,7 @@ jobs:
       - name: Build packages with OpenWrt SDK
         uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
         env:
-          ARCH: x86_64-${{ matrix.sdk }}
+          ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
           FEEDNAME: packages_ci
           # luci.mk emits the i18n package while building luci-app-easytier; it has no download target.
           PACKAGES: easytier easytier-noweb luci-app-easytier
@@ -73,31 +60,21 @@ jobs:
           V: s
       - name: Verify package outputs
         env:
-          PACKAGE_DIR: bin/packages/x86_64/packages_ci
-          BUILD_TARGET: x86_64-${{ matrix.sdk }}
+          PACKAGE_DIR: bin/packages/${{ matrix.arch }}/packages_ci
+          BUILD_TARGET: ${{ matrix.arch }}-${{ matrix.sdk }}
           REQUIRE_PACKAGE_INDEX: 0
           SDK: ${{ matrix.sdk }}
         run: .github/scripts/prepare-package-artifacts.sh
 
   build:
     name: Build ${{ matrix.arch }}-${{ matrix.sdk }}
-    needs: build-smoke
+    needs:
+      - checks
+      - build-smoke
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        arch:
-          - aarch64_generic
-          - arm_arm926ej-s
-          - arm_arm1176jzf-s_vfp
-          - arm_cortex-a7
-          - arm_cortex-a7_neon-vfpv4
-          - mips_24kc
-          - mipsel_24kc
-        sdk:
-          - 24.10.8
-          - 25.12.5
-          - SNAPSHOT
+      matrix: ${{ fromJSON(needs.checks.outputs.remaining_matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:

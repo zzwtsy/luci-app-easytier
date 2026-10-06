@@ -1,0 +1,16 @@
+{
+  "name": "luci-app-easytier",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Development checks for the EasyTier OpenWrt feed",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "check": "bash scripts/check.sh",
+    "lint": "eslint 'luci-app-easytier/htdocs/**/*.js'"
+  },
+  "devDependencies": {
+    "eslint": "10.4.0"
+  }
+}
