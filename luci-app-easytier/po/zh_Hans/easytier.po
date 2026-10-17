@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: luci-app-easytier 3.0.0\n"
+"Project-Id-Version: luci-app-easytier 3.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-26 17:23-0700\n"
 "PO-Revision-Date: 2026-09-26 15:41-0700\n"
@@ -1089,3 +1089,403 @@ msgstr "诊断"
 
 #~ msgid "Upload Program"
 #~ msgstr "上传程序"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:130 htdocs/luci-static/resources/view/easytier/config.js:138
+msgid "A VPN portal private key is required."
+msgstr "必须填写 VPN 门户私钥。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:70
+msgid "Action"
+msgstr "动作"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:90
+msgid "Allow"
+msgstr "允许"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:74
+msgid "Allow this Web gateway to relay data traffic."
+msgstr "允许此 Web 网关中继数据流量。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:93
+msgid "Any"
+msgstr "任意"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:132
+msgid "Base64 encoded 32-byte WireGuard private key. Passed through the process environment."
+msgstr "Base64 编码的 32 字节 WireGuard 私钥，通过进程环境变量传递。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:79
+msgid "Burst Limit"
+msgstr "突发限制"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:81
+msgid "Bytes"
+msgstr "字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:85
+msgid "Created"
+msgstr "创建时间"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:171
+msgid "Custom TCP STUN servers in HOST:PORT format. Leave empty for built-in defaults."
+msgstr "自定义 TCP STUN 服务器，格式为主机:端口。留空使用内置默认值。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:170
+msgid "Custom UDP STUN servers in HOST:PORT format. Leave empty for built-in defaults."
+msgstr "自定义 UDP STUN 服务器，格式为主机:端口。留空使用内置默认值。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:166
+msgid "DNS zone used by Magic DNS. The default is et.net."
+msgstr "Magic DNS 使用的 DNS 区域，默认为 et.net.。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:99
+msgid "Default / None"
+msgstr "默认 / 无"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:83
+msgid "Destination Address"
+msgstr "目标地址"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:59
+msgid "Destination IP"
+msgstr "目标 IP"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:76
+msgid "Destination IPs"
+msgstr "目标 IP"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:58
+msgid "Direction"
+msgstr "方向"
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Disable Relay QUIC"
+msgstr "禁用 QUIC 中继"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:164
+msgid "Disable UPnP"
+msgstr "禁用 UPnP"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:164
+msgid "Disable automatic UPnP and NAT-PMP listener port mapping. Requires EasyTier 2.7.0."
+msgstr "禁用通过 UPnP 和 NAT-PMP 自动映射监听端口，需要 EasyTier 2.7.0。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:91
+msgid "Drop (no response)"
+msgstr "丢弃（不回应）"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "EasyTier 2.7.0 requires wg://IP:PORT, a non-empty network secret, a portal private key and named clients. Migrate old CIDR URLs and export new client configurations."
+msgstr "EasyTier 2.7.0 要求使用 wg://IP:端口、非空的网络密钥、门户私钥和具名客户端。请迁移带 CIDR 的旧地址并重新导出客户端配置。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Enable Foreign Network QUIC Relay"
+msgstr "启用其他网络的 QUIC 中继"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:71
+msgid "Enabled"
+msgstr "已启用"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:139
+msgid "Enter a base64 encoded 32-byte WireGuard private key."
+msgstr "请输入 Base64 编码的 32 字节 WireGuard 私钥。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:61
+msgid "Error Type"
+msgstr "错误类型"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:96
+msgid "Established"
+msgstr "已建立"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:63
+msgid "From Instance ID"
+msgstr "来源实例ID"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:73
+msgid "Gateway Peer URL"
+msgstr "网关对等节点地址"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:74
+msgid "Gateway Relay Data"
+msgstr "网关转发数据"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:71
+msgid "Heartbeat Minimum Response Time (ms)"
+msgstr "心跳最小响应时间（毫秒）"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:72
+msgid "Heartbeat Timeout (ms)"
+msgstr "心跳超时时间（毫秒）"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Instance Receive Rate Limit"
+msgstr "实例接收限速"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:98
+msgid "Invalid"
+msgstr "无效"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:86
+msgid "Last Seen"
+msgstr "最近活跃"
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Lazy P2P"
+msgstr "延迟 P2P"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:165
+msgid "Linux SO_MARK for underlay sockets, used with policy routing."
+msgstr "底层套接字的 Linux SO_MARK 标记，用于策略路由。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:166
+msgid "Magic DNS Zone"
+msgstr "魔法 DNS 区域"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:60
+msgid "Mapped Destination IP"
+msgstr "映射后目标 IP"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Maximum inbound bytes per second for this instance. Leave empty for no limit."
+msgstr "此实例每秒允许接收的最大字节数，留空不限速。"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:71
+msgid "Minimum heartbeat response delay. The default is 3500 ms."
+msgstr "心跳响应的最小延迟，默认为 3500 毫秒。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:68
+msgid "Name"
+msgstr "名称"
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Need P2P"
+msgstr "强制 P2P"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:95
+msgid "New"
+msgstr "新建"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:92
+msgid "Noop"
+msgstr "不处理"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:141
+msgid "One named WireGuard client per entry: NAME=IPv4/PREFIX, for example client1=10.14.14.1/24. Requires EasyTier 2.7.0."
+msgstr "每项配置一个具名 WireGuard 客户端，格式为名称=IPv4/前缀，例如 client1=10.14.14.1/24。需要 EasyTier 2.7.0。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:80
+msgid "Packets"
+msgstr "数据包数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:46
+msgid "Peer RPC Errors"
+msgstr "节点 RPC 错误数"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:73
+msgid "Peer URL used by this Web instance as a gateway. Its scheme must match the service protocol. Requires central network mode without a webhook."
+msgstr "此 Web 实例作为网关时使用的节点 URL，协议须与服务协议一致，需要未启用 Webhook 的中心化网络模式。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:73
+msgid "Ports"
+msgstr "端口"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:69
+msgid "Priority"
+msgstr "优先级"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:78
+msgid "Rate Limit"
+msgstr "速率限制"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:97
+msgid "Related"
+msgstr "关联"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:170
+msgid "STUN Servers"
+msgstr "STUN 服务器"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:171
+msgid "STUN Servers (TCP)"
+msgstr "STUN 服务器（TCP）"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:165
+msgid "Socket Mark"
+msgstr "Socket Mark"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:82
+msgid "Source Address"
+msgstr "源地址"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:75
+msgid "Source IPs"
+msgstr "源 IP"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:74
+msgid "Source Ports"
+msgstr "源端口"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:84
+msgid "State"
+msgstr "状态"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:77
+msgid "Stateful"
+msgstr "有状态"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:47
+msgid "TCP Proxy Connect"
+msgstr "TCP 代理连接数"
+
+#: htdocs/luci-static/resources/view/easytier/web.js:72
+msgid "Time before a silent client is marked offline. The default is 15000 ms."
+msgstr "无响应客户端被标记离线前的等待时间，默认为 15000 毫秒。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:64
+msgid "To Instance ID"
+msgstr "目标实例ID"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:42
+msgid "Traffic Bytes Foreign Forward Forwarded"
+msgstr "跨网中转转发字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:40
+msgid "Traffic Bytes Foreign Forward RX"
+msgstr "跨网中转接收字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:41
+msgid "Traffic Bytes Foreign Forward TX"
+msgstr "跨网中转发送字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:36
+msgid "Traffic Bytes RX By Instance"
+msgstr "按实例统计接收字节数（总计）"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:37
+msgid "Traffic Bytes TX By Instance"
+msgstr "按实例统计发送字节数（总计）"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:28
+msgid "Traffic Control Bytes Forwarded"
+msgstr "流量控制转发字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:26
+msgid "Traffic Control Bytes RX"
+msgstr "流量控制接收字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:29
+msgid "Traffic Control Bytes RX By Instance"
+msgstr "按实例统计接收字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:27
+msgid "Traffic Control Bytes TX"
+msgstr "流量控制发送字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:30
+msgid "Traffic Control Bytes TX By Instance"
+msgstr "按实例统计发送字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:33
+msgid "Traffic Control Packets Forwarded"
+msgstr "流量控制转发数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:31
+msgid "Traffic Control Packets RX"
+msgstr "流量控制接收数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:34
+msgid "Traffic Control Packets RX By Instance"
+msgstr "按实例统计接收数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:32
+msgid "Traffic Control Packets TX"
+msgstr "流量控制发送数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:35
+msgid "Traffic Control Packets TX By Instance"
+msgstr "按实例统计发送数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:45
+msgid "Traffic Packets Foreign Forward Forwarded"
+msgstr "跨网中转转发数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:43
+msgid "Traffic Packets Foreign Forward RX"
+msgstr "跨网中转接收数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:44
+msgid "Traffic Packets Foreign Forward TX"
+msgstr "跨网中转发送数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:38
+msgid "Traffic Packets RX By Instance"
+msgstr "按实例统计接收数据包（总计）"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:39
+msgid "Traffic Packets TX By Instance"
+msgstr "按实例统计发送数据包（总计）"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:48
+msgid "UDP Broadcast Relay Packets Captured"
+msgstr "UDP 广播中继捕获数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:50
+msgid "UDP Broadcast Relay Packets Forward Failed"
+msgstr "UDP 广播中继转发失败数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:49
+msgid "UDP Broadcast Relay Packets Forwarded"
+msgstr "UDP 广播中继转发数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:51
+msgid "UDP Broadcast Relay Packets Ignored"
+msgstr "UDP 广播中继忽略数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:94
+msgid "Unspecified"
+msgstr "未指定"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:152
+msgid "Use NAME=IPv4/PREFIX; names may contain letters, digits and dashes."
+msgstr "请使用名称=IPv4/前缀，名称只能包含字母、数字和短横线。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:63
+msgid "Use a full URL such as udp://config-server.easytier.cn:22020/username. Legacy official usernames are expanded automatically."
+msgstr "请使用完整 URL，例如 udp://config-server.easytier.cn:22020/username。已有的官方账号简写会自动补全。"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:129
+msgid "Use wg://IP:PORT without a client CIDR path."
+msgstr "请使用 wg://IP:端口，不要在地址后附加客户端 CIDR。"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:52
+msgid "VPN Portal Client"
+msgstr "VPN 门户客户端"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:53
+msgid "VPN Portal Client Bytes RX"
+msgstr "VPN 门户客户端接收字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:54
+msgid "VPN Portal Client Bytes TX"
+msgstr "VPN 门户客户端发送字节数"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:55
+msgid "VPN Portal Client Packets RX"
+msgstr "VPN 门户客户端接收数据包"
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:56
+msgid "VPN Portal Client Packets TX"
+msgstr "VPN 门户客户端发送数据包"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:141
+msgid "VPN Portal Clients"
+msgstr "VPN 门户客户端"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "VPN Portal Listen Address"
+msgstr "VPN 门户监听地址"
+
+#: htdocs/luci-static/resources/view/easytier/config.js:132
+msgid "VPN Portal Private Key"
+msgstr "VPN 门户私钥"

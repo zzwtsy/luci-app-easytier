@@ -69,6 +69,16 @@ npm run check
 3. `EASYTIER_VERSION` 与 `LUCI_APP_VERSION` 用途不同。只做构建验证时可只更新 Core 版本；要发布包含新 Core 的完整软件包时，也要提升 `LUCI_APP_VERSION`，因为它决定 LuCI 包版本和仓库 Release tag。
 4. 运行 `npm run check`、架构映射检查和 `.github/scripts/check-arm-abi.sh`。发布时从仓库默认分支手动运行 `build.yml`，填写与 `LUCI_APP_VERSION` 一致的 tag（可带 `v`）并选择 `all`。PR smoke 覆盖 8 个代表架构 × 3 个 SDK；完整发布构建覆盖 22 个架构 × 3 个 SDK。
 
+### 同步 EasyTier 2.7.0
+
+本次同步的上游 LuCI 提交为 `9c51d3f8d2bfcefd039f2ff2354c6a7674293a06`。新增 UCI 字段沿用上游命名，功能移植到 JavaScript 表单和 `service.sh`，旧 Lua 页面与运行时下载脚本继续保持删除。
+
+- WireGuard 旧配置保留原值并拒绝启动，提示用户补齐门户私钥、具名客户端并重新导出配置。私钥只通过 `ET_VPN_PORTAL_PRIVATE_KEY` 传递，与 `TZ` 一次设置，避免覆盖环境。
+- 官方 Web 账号简写在运行时补全为完整 URL；多线程开关显式传递 `true` 或 `false`，保持升级前的界面语义。
+- `--gateway-relay-data` 只传开关本身；上游脚本附带的 `true` 会被官方 2.7.0 程序拒绝。
+- 保留本地同步 TOML 校验和 `respawn 3600 5 5`。诊断查询继续按需执行，增加请求串行化、隐藏页面暂停和统计/ACL 翻译；复制保留原始输出。
+- `tests/service.sh` 可通过 `EASYTIER_TEST_CORE`、`EASYTIER_TEST_WEB` 指向主机架构的官方程序，额外核对生成参数是否被接受。常规检查不要求这些二进制；设备上的 VPN Portal、Web 数据库迁移与回退仍需实机验证。
+
 ### 扩展 SDK 或架构
 
 同步检查 `config/build-targets.json`、`easytier/arch.mk`、`build.yml` 的手动架构选项，以及 README 和发布包指南中的 SDK 版本说明。`npm run check` 会验证构建目标和手动架构选项一致；新架构还应核对上游资产映射及 ABI。

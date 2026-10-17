@@ -22,6 +22,106 @@ var sources = [
 	['log', _('Logs'), false]
 ];
 
+var metricTranslations = {
+	"traffic_control_bytes_rx": _("Traffic Control Bytes RX"),
+	"traffic_control_bytes_tx": _("Traffic Control Bytes TX"),
+	"traffic_control_bytes_forwarded": _("Traffic Control Bytes Forwarded"),
+	"traffic_control_bytes_rx_by_instance": _("Traffic Control Bytes RX By Instance"),
+	"traffic_control_bytes_tx_by_instance": _("Traffic Control Bytes TX By Instance"),
+	"traffic_control_packets_rx": _("Traffic Control Packets RX"),
+	"traffic_control_packets_tx": _("Traffic Control Packets TX"),
+	"traffic_control_packets_forwarded": _("Traffic Control Packets Forwarded"),
+	"traffic_control_packets_rx_by_instance": _("Traffic Control Packets RX By Instance"),
+	"traffic_control_packets_tx_by_instance": _("Traffic Control Packets TX By Instance"),
+	"traffic_bytes_rx_by_instance": _("Traffic Bytes RX By Instance"),
+	"traffic_bytes_tx_by_instance": _("Traffic Bytes TX By Instance"),
+	"traffic_packets_rx_by_instance": _("Traffic Packets RX By Instance"),
+	"traffic_packets_tx_by_instance": _("Traffic Packets TX By Instance"),
+	"traffic_bytes_foreign_forward_rx": _("Traffic Bytes Foreign Forward RX"),
+	"traffic_bytes_foreign_forward_tx": _("Traffic Bytes Foreign Forward TX"),
+	"traffic_bytes_foreign_forward_forwarded": _("Traffic Bytes Foreign Forward Forwarded"),
+	"traffic_packets_foreign_forward_rx": _("Traffic Packets Foreign Forward RX"),
+	"traffic_packets_foreign_forward_tx": _("Traffic Packets Foreign Forward TX"),
+	"traffic_packets_foreign_forward_forwarded": _("Traffic Packets Foreign Forward Forwarded"),
+	"peer_rpc_errors": _("Peer RPC Errors"),
+	"tcp_proxy_connect": _("TCP Proxy Connect"),
+	"udp_broadcast_relay_packets_captured": _("UDP Broadcast Relay Packets Captured"),
+	"udp_broadcast_relay_packets_forwarded": _("UDP Broadcast Relay Packets Forwarded"),
+	"udp_broadcast_relay_packets_forward_failed": _("UDP Broadcast Relay Packets Forward Failed"),
+	"udp_broadcast_relay_packets_ignored": _("UDP Broadcast Relay Packets Ignored"),
+	"vpn_portal_client": _("VPN Portal Client"),
+	"vpn_portal_client_bytes_rx": _("VPN Portal Client Bytes RX"),
+	"vpn_portal_client_bytes_tx": _("VPN Portal Client Bytes TX"),
+	"vpn_portal_client_packets_rx": _("VPN Portal Client Packets RX"),
+	"vpn_portal_client_packets_tx": _("VPN Portal Client Packets TX"),
+	"compression_algo": _("Compression Algorithm"),
+	"direction": _("Direction"),
+	"dst_ip": _("Destination IP"),
+	"mapped_dst_ip": _("Mapped Destination IP"),
+	"error_type": _("Error Type"),
+	"protocol": _("Protocol"),
+	"from_instance_id": _("From Instance ID"),
+	"to_instance_id": _("To Instance ID")
+};
+
+var aclFieldTranslations = {
+	"name": _("Name"),
+	"prio": _("Priority"),
+	"action": _("Action"),
+	"enabled": _("Enabled"),
+	"proto": _("Protocol"),
+	"ports": _("Ports"),
+	"src_ports": _("Source Ports"),
+	"src_ips": _("Source IPs"),
+	"dst_ips": _("Destination IPs"),
+	"stateful": _("Stateful"),
+	"rate": _("Rate Limit"),
+	"burst": _("Burst Limit"),
+	"pkts": _("Packets"),
+	"bytes": _("Bytes"),
+	"src": _("Source Address"),
+	"dst": _("Destination Address"),
+	"state": _("State"),
+	"created": _("Created"),
+	"last_seen": _("Last Seen")
+};
+
+var aclValueTranslations = {
+	"Allow": _("Allow"),
+	"Drop": _("Drop (no response)"),
+	"Noop": _("Noop"),
+	"Any": _("Any"),
+	"Unspecified": _("Unspecified"),
+	"New": _("New"),
+	"Established": _("Established"),
+	"Related": _("Related"),
+	"Invalid": _("Invalid"),
+	"<default/none>": _("Default / None")
+};
+
+function translateOutput(text, source) {
+	if (source === 'stats') {
+		return text.replace(/\b[a-z][a-z0-9_]+\b/g, function(token) {
+			var translation = metricTranslations[token];
+			return typeof translation === 'string' ? translation : token;
+		});
+	}
+	if (source === 'acl') {
+		text = text.replace(/\b(action|proto|state): (Allow|Drop|Noop|Any|Unspecified|New|Established|Related|Invalid)\b/g, function(match, field, value) {
+			return field + ': ' + aclValueTranslations[value];
+		});
+		text = text.replace(/\b(name|prio|action|enabled|proto|ports|src_ports|src_ips|dst_ips|stateful|rate|burst|pkts|bytes|src|dst|state|created|last_seen): /g, function(match, field) {
+			return aclFieldTranslations[field] + ': ';
+		});
+		return text.replace(/<default\/none>/g, aclValueTranslations['<default/none>']);
+	}
+	return text;
+}
+
+function plainResult(text, source) {
+	return { text: text, element: textPre(translateOutput(text, source)) };
+}
+
 function isPlainObject(value) {
 	return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -147,32 +247,45 @@ return view.extend({
 		var self = this;
 		var refs = this.refs;
 		var source = this.currentSource;
+		if (document.hidden && !announce)
+			return Promise.resolve();
+		// 同时只运行一条查询；切换数据源时，在当前请求结束后再加载最新选择。
+		if (this.pendingRefresh) {
+			this.refreshQueued = this.refreshQueued || announce || source !== this.requestSource;
+			return this.pendingRefresh;
+		}
+		this.requestSource = source;
 		if (announce)
 			dom.content(refs.output, textPre(_('Loading…')));
-		return this.fetch(source).then(function(result) {
+		this.pendingRefresh = this.fetch(source).then(function(result) {
 			if (source !== self.currentSource)
 				return;
-			dom.content(refs.output, result);
+			self.currentText = result.text;
+			dom.content(refs.output, result.element);
 			refs.updated.textContent = _('Last updated: %s').format(new Date().toLocaleTimeString());
 		}).catch(function(error) {
 			if (source !== self.currentSource)
 				return;
 			dom.content(refs.output, textPre(error.message));
+		}).then(function() {
+			self.pendingRefresh = null;
+			if (self.refreshQueued) {
+				self.refreshQueued = false;
+				return self.refresh(true);
+			}
 		});
+		return this.pendingRefresh;
 	},
 	fetch: function(source) {
-		var self = this;
 		if (source === 'log') {
 			return easytier.read('logs', ['core']).then(function(result) {
-				self.currentText = result.output || _('No EasyTier log entries are available.');
-				return textPre(self.currentText);
+				return plainResult(result.output || _('No EasyTier log entries are available.'), source);
 			});
 		}
 		var jsonCapable = sources.some(function(item) { return item[0] === source && item[2]; });
 		if (!jsonCapable) {
 			return easytier.read('conninfo', [source]).then(function(result) {
-				self.currentText = result.output || _('No information available');
-				return textPre(self.currentText);
+				return plainResult(result.output || _('No information available'), source);
 			});
 		}
 		// 优先请求 JSON 输出并渲染为表格；解析失败时回退到纯文本输出，不报错。
@@ -181,14 +294,12 @@ return view.extend({
 			try {
 				var rows = extractRows(JSON.parse(text));
 				if (rows) {
-					self.currentText = text;
-					return renderTable(rows);
+					return { text: text, element: renderTable(rows) };
 				}
 			}
 			catch (e) { /* 回退到纯文本 */ }
 			return easytier.read('conninfo', [source]).then(function(plain) {
-				self.currentText = plain.output || _('No information available');
-				return textPre(self.currentText);
+				return plainResult(plain.output || _('No information available'), source);
 			});
 		});
 	},

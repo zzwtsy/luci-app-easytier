@@ -69,6 +69,16 @@ Install ShellCheck and GNU gettext on the host first. The ARM ABI check download
 3. `EASYTIER_VERSION` and `LUCI_APP_VERSION` serve different purposes. A build-only check can change only the Core version. To publish packages containing the new Core, also increment `LUCI_APP_VERSION`, which versions the LuCI package and repository Release tag.
 4. Run `npm run check`, the architecture mapping checks, and `.github/scripts/check-arm-abi.sh`. For a release, manually run `build.yml` from the repository default branch, enter a tag matching `LUCI_APP_VERSION` (optional `v` prefix), and select `all`. PR smoke covers 8 representative architectures × 3 SDKs; a full release builds 22 architectures × 3 SDKs.
 
+### Synchronizing EasyTier 2.7.0
+
+The synchronized upstream LuCI commit is `9c51d3f8d2bfcefd039f2ff2354c6a7674293a06`. New UCI fields keep the upstream names, while their behavior is ported to JavaScript forms and `service.sh`. Legacy Lua pages and runtime download scripts remain deleted.
+
+- Keep legacy WireGuard values and refuse startup with instructions to supply a portal key, named clients, and freshly exported client configurations. Pass the key only through `ET_VPN_PORTAL_PRIVATE_KEY`, setting it together with `TZ` to preserve both environment values.
+- Expand official Web username shortcuts into full URLs at runtime. Pass the multithreading choice explicitly as `true` or `false` to preserve the previous UI semantics.
+- Pass `--gateway-relay-data` without a value. The trailing `true` in the upstream script is rejected by the official 2.7.0 binary.
+- Keep synchronous TOML validation and `respawn 3600 5 5`. Diagnostics remain on demand, with serialized queries, hidden-page refresh suspension, and statistics/ACL translations. Copying preserves raw output.
+- Set `EASYTIER_TEST_CORE` and `EASYTIER_TEST_WEB` to official host binaries to check generated arguments in `tests/service.sh`. The regular checks do not require these binaries. VPN Portal operation, Web database migration, and rollback still need device validation.
+
 ### Adding an SDK or architecture
 
 Review `config/build-targets.json`, `easytier/arch.mk`, the manual architecture choices in `build.yml`, and SDK version references in the READMEs and generated package guide. `npm run check` verifies that the target manifest and manual architecture choices agree. For a new architecture, also verify its upstream asset mapping and ABI.

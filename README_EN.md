@@ -7,6 +7,15 @@ English | [简体中文](README.md)
 
 A LuCI application for configuring and managing [EasyTier](https://github.com/EasyTier/EasyTier) on OpenWrt.
 
+## Upgrading to Core 2.7.0
+
+This branch updates LuCI to 3.1.0 and the default Core to [v2.7.0](https://github.com/EasyTier/EasyTier/releases/tag/v2.7.0), currently marked as an upstream pre-release. Back up UCI, TOML, and any self-hosted Web Console database before upgrading. The Web database is migrated; rolling back Core also requires restoring the pre-upgrade database.
+
+- Use a full Web configuration URL, such as `udp://config-server.easytier.cn:22020/username`. Existing official username shortcuts are expanded at startup without rewriting the saved UCI value.
+- Migrate old WireGuard portal URLs from `wg://IP:PORT/CIDR` to `wg://IP:PORT`, set a non-empty network secret, supply a dedicated portal private key, and add named clients as `NAME=IPv4/PREFIX`. Export new client configurations after upgrading. Legacy URLs or missing keys stop startup with a migration message.
+- Replace the old TOML `client_cidr` field with `[[vpn_portal_config.clients]]`; see the repository's `config.toml` example. Invalid TOML is rejected before startup.
+- The new Core, heartbeat, and Gateway settings require matching binaries. The Gateway peer URL scheme must match the Web service protocol. Gateway requires central network mode and cannot be combined with Webhook mode.
+
 ## UI preview
 
 ![EasyTier overview and program management](docs/image/Overview.png)

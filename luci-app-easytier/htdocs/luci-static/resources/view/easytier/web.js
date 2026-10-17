@@ -68,6 +68,10 @@ return view.extend({
 		flag(s, 'web_fw_api', 'Allow API and HTML Through WAN Firewall');
 		flag(s, 'web_disable_registration', 'Disable Registration');
 		flag(s, 'web_allow_auto_create_user', 'Allow Automatic User Creation');
+		value(s, 'web_heartbeat_min_response_ms', 'Heartbeat Minimum Response Time (ms)', 'Minimum heartbeat response delay. The default is 3500 ms.', 'uinteger');
+		value(s, 'web_heartbeat_timeout_ms', 'Heartbeat Timeout (ms)', 'Time before a silent client is marked offline. The default is 15000 ms.', 'uinteger');
+		value(s, 'web_gateway_peer_url', 'Gateway Peer URL', 'Peer URL used by this Web instance as a gateway. Its scheme must match the service protocol. Requires central network mode without a webhook.');
+		flag(s, 'web_gateway_relay_data', 'Gateway Relay Data', 'Allow this Web gateway to relay data traffic.');
 		var log = s.option(form.ListValue, 'web_weblog', _('Web Log Level'));
 		['off', 'error', 'warn', 'info', 'debug', 'trace'].forEach(function(level) { log.value(level); });
 

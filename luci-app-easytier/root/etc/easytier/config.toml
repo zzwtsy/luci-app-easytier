@@ -3,7 +3,8 @@ instance_id = "f9f05421-7c6b-47d6-a67d-4d58d49f51d8"
 dhcp = true
 listeners = []
 exit_nodes = []
-rpc_portal = "0.0.0.0:15888"
+# The management RPC endpoint is a CLI option (-r), not a TOML field.
+# Configuration-file mode uses EasyTier's default RPC endpoint.
 
 [network_identity]
 network_name = "mynetwork"
@@ -12,4 +13,15 @@ network_secret = "mysecret"
 [[peer]]
 uri = "tcp://public.easytier.top:11010"
 
-
+# Optional WireGuard portal for EasyTier 2.7.0 and newer.
+# Migrate the old client_cidr field to named clients and export new client configs.
+# Supply a dedicated base64 encoded 32-byte server private key before enabling.
+# [vpn_portal_config]
+# enabled = true
+# wireguard_listen = "0.0.0.0:51820"
+# wireguard_private_key = ""
+#
+# [[vpn_portal_config.clients]]
+# name = "client1"
+# virtual_ip = "10.14.14.1/24"
+# groups = []

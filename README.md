@@ -7,6 +7,15 @@
 
 OpenWrt LuCI 插件，用于配置和管理 [EasyTier](https://github.com/EasyTier/EasyTier)。
 
+## Core 2.7.0 升级说明
+
+本分支将 LuCI 版本更新为 3.1.0，默认 Core 更新为 [v2.7.0](https://github.com/EasyTier/EasyTier/releases/tag/v2.7.0)（上游目前标记为预发布版）。升级前备份 UCI、TOML 和自建 Web 控制台数据库；Web 数据库会执行迁移，回滚 Core 时也需要恢复升级前的数据库。
+
+- Web 配置地址改用完整 URL，例如 `udp://config-server.easytier.cn:22020/username`。已有官方账号简写会在启动时补全，保存的 UCI 值保持不变。
+- 旧 WireGuard 门户 `wg://IP:PORT/CIDR` 需要改成 `wg://IP:PORT`，设置非空的网络密钥、填写独立门户私钥，并以 `NAME=IPv4/PREFIX` 逐项配置客户端。升级后重新导出客户端配置；旧地址或缺少私钥时服务会停止启动并记录迁移提示。
+- TOML 的旧 `client_cidr` 字段需要改成 `[[vpn_portal_config.clients]]`；示例见仓库中的 `config.toml`。无效 TOML 会在启动前被拒绝。
+- 新增的 Core、心跳和 Gateway 选项需要对应版本的二进制。Gateway 节点 URL 的协议须与 Web 服务协议一致，使用中心化网络模式，不能与 Webhook 模式同时启用。
+
 ## 界面预览
 
 ![EasyTier 概览和程序管理](docs/image/Overview.png)

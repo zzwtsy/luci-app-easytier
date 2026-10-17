@@ -2,6 +2,7 @@
 'require view';
 'require form';
 'require uci';
+'require validation';
 
 function add(section, tab, type, name, title, description, datatype) {
 	var option = section.taboption(tab, type, name, _(title), description ? _(description) : null);
@@ -59,7 +60,9 @@ return view.extend({
 		add(s, 'general', form.Value, 'ipaddr', 'Interface IPv4 Address', 'Leave empty for forwarding only.', 'ip4addr').depends('etcmd', 'etcmd');
 		add(s, 'general', form.Value, 'ip6addr', 'Interface IPv6 Address', 'Optional address for dual-stack operation.', 'ip6addr').depends('etcmd', 'etcmd');
 		add(s, 'general', form.DynamicList, 'peeradd', 'Peer Nodes', 'Initial peer addresses.').depends('etcmd', 'etcmd');
-		add(s, 'general', form.Value, 'web_config', 'Web Configuration Address', 'Use a username for the official console or udp://host:port/username for a self-hosted console.').depends('etcmd', 'web');
+		var webConfig = add(s, 'general', form.Value, 'web_config', 'Web Configuration Address', 'Use a full URL such as udp://config-server.easytier.cn:22020/username. Legacy official usernames are expanded automatically.');
+		webConfig.placeholder = 'udp://config-server.easytier.cn:22020/username';
+		webConfig.depends('etcmd', 'web');
 		add(s, 'general', form.Value, 'desvice_name', 'Hostname', 'Name shown to other nodes.').depends('etcmd', 'web');
 		add(s, 'general', form.Value, 'tunname', 'Virtual Interface Name', 'TUN device name.').depends('etcmd', 'etcmd');
 
@@ -92,10 +95,12 @@ return view.extend({
 		add(s, 'relay', form.Value, 'socks_port', 'SOCKS5 Port', 'Leave empty to disable SOCKS5.', 'port').depends('etcmd', 'etcmd');
 		add(s, 'relay', form.DynamicList, 'port_forward', 'Port Forwarding', 'Port forwarding rules for EasyTier peers.').depends('etcmd', 'etcmd');
 		add(s, 'relay', form.Value, 'foreign_relay_bps_limit', 'Foreign Relay Bandwidth Limit', null, 'uinteger').depends('etcmd', 'etcmd');
+		add(s, 'relay', form.Value, 'instance_recv_bps_limit', 'Instance Receive Rate Limit', 'Maximum inbound bytes per second for this instance. Leave empty for no limit.', 'uinteger').depends('etcmd', 'etcmd');
 		[
 			['kcp_proxy', 'Enable KCP Proxy'], ['kcp_input', 'Disable KCP Input'],
 			['quic_proxy', 'Enable QUIC Proxy'], ['quic_input', 'Disable QUIC Input'],
-			['relay_kcp', 'Enable Foreign Network KCP Relay'], ['disable_relay_kcp', 'Disable Relay KCP']
+			['relay_kcp', 'Enable Foreign Network KCP Relay'], ['disable_relay_kcp', 'Disable Relay KCP'],
+			['relay_quic', 'Enable Foreign Network QUIC Relay'], ['disable_relay_quic', 'Disable Relay QUIC']
 		].forEach(function(item) { add(s, 'relay', form.Flag, item[0], item[1]).depends('etcmd', 'etcmd'); });
 
 		add(s, 'security', form.Flag, 'disable_encryption', 'Disable Encryption').depends('etcmd', 'etcmd');
@@ -113,16 +118,57 @@ return view.extend({
 		add(s, 'advanced', form.Flag, 'multi_thread', 'Enable Multithreading').depends('etcmd', 'etcmd');
 		add(s, 'advanced', form.Value, 'multi_thread_count', 'Number of Threads', null, 'uinteger').depends('etcmd', 'etcmd');
 		add(s, 'advanced', form.Value, 'mtu', 'MTU', null, 'range(1,1500)').depends('etcmd', 'etcmd');
-		add(s, 'advanced', form.Value, 'vpn_portal', 'VPN Portal URL', 'Optional WireGuard VPN portal.').depends('etcmd', 'etcmd');
+		var portal = add(s, 'advanced', form.Value, 'vpn_portal', 'VPN Portal Listen Address', 'EasyTier 2.7.0 requires wg://IP:PORT, a non-empty network secret, a portal private key and named clients. Migrate old CIDR URLs and export new client configurations.');
+		portal.placeholder = 'wg://0.0.0.0:51820';
+		portal.depends('etcmd', 'etcmd');
+		portal.validate = function(sectionId, value) {
+			if (!value)
+				return true;
+			var match = /^wg:\/\/(\[[^\]]+\]|[^:\/\s?#@]+):([0-9]+)$/.exec(value);
+			if (!match || !(match[1][0] === '[' ? validation.parseIPv6(match[1].slice(1, -1)) : validation.parseIPv4(match[1])) || +match[2] < 1 || +match[2] > 65535)
+				return _('Use wg://IP:PORT without a client CIDR path.');
+			return privateKey.formvalue(sectionId) ? true : _('A VPN portal private key is required.');
+		};
+		var privateKey = add(s, 'advanced', form.Value, 'vpn_portal_private_key', 'VPN Portal Private Key', 'Base64 encoded 32-byte WireGuard private key. Passed through the process environment.');
+		privateKey.password = true;
+		privateKey.retain = true;
+		privateKey.depends('etcmd', 'etcmd');
+		privateKey.validate = function(sectionId, value) {
+			if (!value)
+				return portal.formvalue(sectionId) ? _('A VPN portal private key is required.') : true;
+			return /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/.test(value) ? true : _('Enter a base64 encoded 32-byte WireGuard private key.');
+		};
+		var clients = add(s, 'advanced', form.DynamicList, 'vpn_portal_clients', 'VPN Portal Clients', 'One named WireGuard client per entry: NAME=IPv4/PREFIX, for example client1=10.14.14.1/24. Requires EasyTier 2.7.0.');
+		clients.placeholder = 'client1=10.14.14.1/24';
+		clients.retain = true;
+		clients.depends('etcmd', 'etcmd');
+		clients.validate = function(sectionId, value) {
+			var entries = Array.isArray(value) ? value : [value];
+			return entries.every(function(entry) {
+				if (!entry)
+					return true;
+				var match = /^[A-Za-z0-9][A-Za-z0-9-]*=([0-9.]+)\/([0-9]{1,2})$/.exec(entry);
+				return match && validation.parseIPv4(match[1]) && +match[2] <= 32;
+			}) ? true : _('Use NAME=IPv4/PREFIX; names may contain letters, digits and dashes.');
+		};
 		addValues(s, 'advanced', 'comp', 'Compression Algorithm', null, [['none', 'Default'], ['zstd', 'Zstandard']], 'none').depends('etcmd', 'etcmd');
 		[
 			['smoltcp', 'Use Userspace TCP/IP Stack'], ['no_tun', 'No TUN Mode'],
 			['disable_ipv6', 'Disable IPv6'], ['latency_first', 'Latency First'],
 			['disable_p2p', 'Disable P2P'], ['p2p_only', 'P2P Only'],
+			['lazy_p2p', 'Lazy P2P'], ['need_p2p', 'Need P2P'],
 			['disable_udp', 'Disable UDP Hole Punching'], ['disable_tcp', 'Disable TCP Hole Punching'],
 			['disable_sym', 'Disable Symmetric NAT Hole Punching'], ['bind_device', 'Bind to Physical NIC'],
 			['accept_dns', 'Accept DNS']
 		].forEach(function(item) { add(s, 'advanced', form.Flag, item[0], item[1]).depends('etcmd', 'etcmd'); });
+		add(s, 'advanced', form.Flag, 'disable_upnp', 'Disable UPnP', 'Disable automatic UPnP and NAT-PMP listener port mapping. Requires EasyTier 2.7.0.').depends('etcmd', 'etcmd');
+		add(s, 'advanced', form.Value, 'socket_mark', 'Socket Mark', 'Linux SO_MARK for underlay sockets, used with policy routing.', 'range(0,4294967295)').depends('etcmd', 'etcmd');
+		var dnsZone = add(s, 'advanced', form.Value, 'tld_dns_zone', 'Magic DNS Zone', 'DNS zone used by Magic DNS. The default is et.net.');
+		dnsZone.placeholder = 'et.net.';
+		dnsZone.depends({ etcmd: 'etcmd', accept_dns: '1' });
+		dnsZone.retain = true;
+		add(s, 'advanced', form.DynamicList, 'stun_servers', 'STUN Servers', 'Custom UDP STUN servers in HOST:PORT format. Leave empty for built-in defaults.').depends('etcmd', 'etcmd');
+		add(s, 'advanced', form.DynamicList, 'tcp_stun_servers', 'STUN Servers (TCP)', 'Custom TCP STUN servers in HOST:PORT format. Leave empty for built-in defaults.').depends('etcmd', 'etcmd');
 		add(s, 'advanced', form.DynamicList, 'extra_args', 'Additional Arguments', 'Each list entry is passed as one argument.').depends('etcmd', 'etcmd');
 
 		// 接口、防火墙和连通性检查独立于启动方式，适用于由外部自行管理网络的部署。

@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 -include $(EASYTIER_PACKAGE_DIR)../version.mk
 
 PKG_NAME:=luci-app-easytier
-PKG_VERSION:=$(or $(LUCI_APP_VERSION),3.0.0)
+PKG_VERSION:=$(or $(LUCI_APP_VERSION),3.1.0)
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 # Keep the translation package version aligned with this LuCI package release.

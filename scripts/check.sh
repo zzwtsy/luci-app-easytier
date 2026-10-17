@@ -46,6 +46,7 @@ done
 
 mapfile -t js_files < <(rg --files luci-app-easytier/htdocs -g '*.js' | sort)
 for script in "${js_files[@]}"; do node --check "$script"; done
+node tests/diagnostics.mjs
 
 while IFS= read -r json_file; do
 	python3 -m json.tool "$json_file" >/dev/null

@@ -1051,3 +1051,403 @@ msgstr ""
 #: luci-app-easytier/root/usr/share/luci/menu.d/luci-app-easytier.json
 msgid "Diagnostics"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:130 htdocs/luci-static/resources/view/easytier/config.js:138
+msgid "A VPN portal private key is required."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:70
+msgid "Action"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:90
+msgid "Allow"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:74
+msgid "Allow this Web gateway to relay data traffic."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:93
+msgid "Any"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:132
+msgid "Base64 encoded 32-byte WireGuard private key. Passed through the process environment."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:79
+msgid "Burst Limit"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:81
+msgid "Bytes"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:85
+msgid "Created"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:171
+msgid "Custom TCP STUN servers in HOST:PORT format. Leave empty for built-in defaults."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:170
+msgid "Custom UDP STUN servers in HOST:PORT format. Leave empty for built-in defaults."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:166
+msgid "DNS zone used by Magic DNS. The default is et.net."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:99
+msgid "Default / None"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:83
+msgid "Destination Address"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:59
+msgid "Destination IP"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:76
+msgid "Destination IPs"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:58
+msgid "Direction"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Disable Relay QUIC"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:164
+msgid "Disable UPnP"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:164
+msgid "Disable automatic UPnP and NAT-PMP listener port mapping. Requires EasyTier 2.7.0."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:91
+msgid "Drop (no response)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "EasyTier 2.7.0 requires wg://IP:PORT, a non-empty network secret, a portal private key and named clients. Migrate old CIDR URLs and export new client configurations."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Enable Foreign Network QUIC Relay"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:71
+msgid "Enabled"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:139
+msgid "Enter a base64 encoded 32-byte WireGuard private key."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:61
+msgid "Error Type"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:96
+msgid "Established"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:63
+msgid "From Instance ID"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:73
+msgid "Gateway Peer URL"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:74
+msgid "Gateway Relay Data"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:71
+msgid "Heartbeat Minimum Response Time (ms)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:72
+msgid "Heartbeat Timeout (ms)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Instance Receive Rate Limit"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:98
+msgid "Invalid"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:86
+msgid "Last Seen"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Lazy P2P"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:165
+msgid "Linux SO_MARK for underlay sockets, used with policy routing."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:166
+msgid "Magic DNS Zone"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:60
+msgid "Mapped Destination IP"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:98
+msgid "Maximum inbound bytes per second for this instance. Leave empty for no limit."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:71
+msgid "Minimum heartbeat response delay. The default is 3500 ms."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:68
+msgid "Name"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js
+msgid "Need P2P"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:95
+msgid "New"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:92
+msgid "Noop"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:141
+msgid "One named WireGuard client per entry: NAME=IPv4/PREFIX, for example client1=10.14.14.1/24. Requires EasyTier 2.7.0."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:80
+msgid "Packets"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:46
+msgid "Peer RPC Errors"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:73
+msgid "Peer URL used by this Web instance as a gateway. Its scheme must match the service protocol. Requires central network mode without a webhook."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:73
+msgid "Ports"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:69
+msgid "Priority"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:78
+msgid "Rate Limit"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:97
+msgid "Related"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:170
+msgid "STUN Servers"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:171
+msgid "STUN Servers (TCP)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:165
+msgid "Socket Mark"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:82
+msgid "Source Address"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:75
+msgid "Source IPs"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:74
+msgid "Source Ports"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:84
+msgid "State"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:77
+msgid "Stateful"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:47
+msgid "TCP Proxy Connect"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/web.js:72
+msgid "Time before a silent client is marked offline. The default is 15000 ms."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:64
+msgid "To Instance ID"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:42
+msgid "Traffic Bytes Foreign Forward Forwarded"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:40
+msgid "Traffic Bytes Foreign Forward RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:41
+msgid "Traffic Bytes Foreign Forward TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:36
+msgid "Traffic Bytes RX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:37
+msgid "Traffic Bytes TX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:28
+msgid "Traffic Control Bytes Forwarded"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:26
+msgid "Traffic Control Bytes RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:29
+msgid "Traffic Control Bytes RX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:27
+msgid "Traffic Control Bytes TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:30
+msgid "Traffic Control Bytes TX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:33
+msgid "Traffic Control Packets Forwarded"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:31
+msgid "Traffic Control Packets RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:34
+msgid "Traffic Control Packets RX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:32
+msgid "Traffic Control Packets TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:35
+msgid "Traffic Control Packets TX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:45
+msgid "Traffic Packets Foreign Forward Forwarded"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:43
+msgid "Traffic Packets Foreign Forward RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:44
+msgid "Traffic Packets Foreign Forward TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:38
+msgid "Traffic Packets RX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:39
+msgid "Traffic Packets TX By Instance"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:48
+msgid "UDP Broadcast Relay Packets Captured"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:50
+msgid "UDP Broadcast Relay Packets Forward Failed"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:49
+msgid "UDP Broadcast Relay Packets Forwarded"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:51
+msgid "UDP Broadcast Relay Packets Ignored"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:94
+msgid "Unspecified"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:152
+msgid "Use NAME=IPv4/PREFIX; names may contain letters, digits and dashes."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:63
+msgid "Use a full URL such as udp://config-server.easytier.cn:22020/username. Legacy official usernames are expanded automatically."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:129
+msgid "Use wg://IP:PORT without a client CIDR path."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:52
+msgid "VPN Portal Client"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:53
+msgid "VPN Portal Client Bytes RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:54
+msgid "VPN Portal Client Bytes TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:55
+msgid "VPN Portal Client Packets RX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/diagnostics.js:56
+msgid "VPN Portal Client Packets TX"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:141
+msgid "VPN Portal Clients"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:121
+msgid "VPN Portal Listen Address"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/easytier/config.js:132
+msgid "VPN Portal Private Key"
+msgstr ""
