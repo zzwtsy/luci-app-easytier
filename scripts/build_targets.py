@@ -55,6 +55,7 @@ def validate_manifest(data: dict[str, Any], workflow: str | None = None) -> None
     sdk_versions = [sdk.get("version") for sdk in sdks]
     if len(sdk_versions) != len(set(sdk_versions)) or any(not version for version in sdk_versions):
         raise ValueError("SDK versions must be present and unique")
+    feed_paths: set[str] = set()
     for sdk in sdks:
         if sdk.get("package_format") not in {"ipk", "apk"}:
             raise ValueError(f"unsupported package format for SDK {sdk.get('version')}")
@@ -63,6 +64,21 @@ def validate_manifest(data: dict[str, Any], workflow: str | None = None) -> None
             raise ValueError(f"invalid package separator for SDK {sdk['version']}")
         if not isinstance(sdk.get("stable"), bool):
             raise ValueError(f"stable must be boolean for SDK {sdk['version']}")
+        if not sdk["stable"]:
+            if "feed_path" in sdk or "feed_aliases" in sdk:
+                raise ValueError(f"unstable SDK {sdk['version']} must not publish stable feed paths")
+            continue
+
+        feed_path = sdk.get("feed_path")
+        aliases = sdk.get("feed_aliases")
+        if not isinstance(aliases, list):
+            raise ValueError(f"feed_aliases must be an array for SDK {sdk['version']}")
+        for path in [feed_path, *aliases]:
+            if not isinstance(path, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", path):
+                raise ValueError(f"invalid feed path for SDK {sdk['version']}: {path!r}")
+            if path in feed_paths:
+                raise ValueError(f"duplicate feed path: {path}")
+            feed_paths.add(path)
 
     release_arches = data.get("release_architectures")
     smoke_arches = data.get("pr_smoke_architectures")
@@ -173,6 +189,8 @@ def main() -> int:
                             sdk["package_format"],
                             sdk["package_separator"],
                             str(sdk["stable"]).lower(),
+                            sdk.get("feed_path", ""),
+                            ",".join(sdk.get("feed_aliases", [])),
                         )
                     )
                 )

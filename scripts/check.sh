@@ -59,6 +59,7 @@ python3 scripts/check_translations.py
 python3 scripts/build_targets.py check
 python3 tests/check-rpc-contract.py
 python3 -m unittest tests/test_build_targets.py
+python3 -m unittest tests/test_feed_site.py
 python3 -m unittest tests/test_translations.py
 python3 -m unittest tests/test_validate_release.py
 bash tests/check-arch-mapping.sh

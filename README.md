@@ -71,7 +71,11 @@ apk add --allow-untrusted /tmp/easytier_*.apk /tmp/luci-app-easytier_*.apk
 
 ### 从 GitHub Pages 软件源安装
 
-软件源为 OpenWrt 24.10.8 和 25.12.5 的匹配 SDK 构建提供签名包。每个 SDK 版本和架构只保留当前 EasyTier 包；较早版本仍可从 Releases 下载。请使用与设备匹配的 OpenWrt 包架构。24.10 可运行 `opkg print-architecture` 查看架构；25.12 及更新版本可运行 `apk --print-arch`。Snapshot 和其他补丁版本请使用 Releases 中对应的安装包。
+签名包当前使用固定的 OpenWrt 24.10.8 和 25.12.5 SDK 构建。24.10.8 软件源地址保持不变；25.12 系列统一使用 `feeds/25.12/`，软件源目录与 SDK 版本独立维护。每个软件源和架构只保留当前 EasyTier 包；较早版本仍可从 Releases 下载，归档名称保留具体 SDK 版本。Snapshot 仅通过 Releases 提供安装包，不发布稳定软件源。
+
+请使用与设备匹配的 OpenWrt 包架构。24.10 可运行 `opkg print-architecture` 查看架构；25.12 及更新版本可运行 `apk --print-arch`。25.12 系列地址不保证任意补丁版本均兼容，安装前仍需核对用户态包依赖并验证运行情况；`kmod-tun` 应由与设备固件匹配的官方软件源提供。其他版本请使用 Releases 中对应的安装包。
+
+已配置的 `feeds/25.12.5/` 地址继续作为兼容入口，提供与 `feeds/25.12/` 相同的当前软件包；它不表示构建 SDK 永久固定为 25.12.5。新安装请使用下面的系列地址。
 
 OpenWrt 24.10.8：
 
@@ -86,14 +90,14 @@ opkg update
 opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-OpenWrt 25.12.5：
+OpenWrt 25.12 系列：
 
 ```sh
 . /etc/openwrt_release
 FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
 ARCH="$DISTRIB_ARCH"
 wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
-echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
+echo "$FEED_BASE/feeds/25.12/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
 apk update
 apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```

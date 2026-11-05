@@ -83,6 +83,10 @@ The synchronized upstream LuCI commit is `9c51d3f8d2bfcefd039f2ff2354c6a7674293a
 
 Review `config/build-targets.json`, `easytier/arch.mk`, the manual architecture choices in `build.yml`, and SDK version references in the READMEs and generated package guide. `npm run check` verifies that the target manifest and manual architecture choices agree. For a new architecture, also verify its upstream asset mapping and ABI.
 
+For stable SDKs, `version` pins the build baseline, `feed_path` independently selects the feed directory, and `feed_aliases` lists old directories to retain. The 25.12.5 SDK currently uses `feed_path: "25.12"` and `feed_aliases: ["25.12.5"]`; 24.10.8 keeps `feed_path: "24.10.8"` with no aliases. Build selection and Release archive names continue to use the exact SDK version. Snapshot publishes only Release archives, without a stable feed.
+
+When upgrading an SDK, retain the series directory and every published compatibility alias. Aliases mirror the series' current signed indexes and packages; they do not pin an old SDK permanently. Publish real files for compatibility directories on GitHub Pages rather than relying on symlinks. A series feed still requires compatibility validation across point releases: check userspace package architecture, ABI, and dependencies, then validate installation and operation on devices. Obtain `kmod-tun` from the official feed matching the device firmware.
+
 ### Package feed signing keys
 
 The `OPKG_FEED_SIGNING_KEY` GitHub secret pairs with `.github/pages/keys/easytier-opkg.pub`; `APK_FEED_SIGNING_KEY` pairs with `.github/pages/keys/easytier-apk.pem`. Both private-key secrets are required for releases and signed-index verification. Devices store their trusted public keys locally, so changing a repository public key does not update device trust automatically. Key rotation requires a separate device migration plan; this guide does not change the current signing workflow.

@@ -51,14 +51,18 @@ declare -A sdk_count=()
 declare -A sdk_format=()
 declare -A sdk_separator=()
 declare -A sdk_stable=()
+declare -A sdk_feed_path=()
+declare -A sdk_feed_aliases=()
 declare -A release_arch=()
 declare -a sdk_versions=()
 declare -a stable_sdk_versions=()
-while IFS=$'\t' read -r version format separator stable; do
+while IFS=$'\t' read -r version format separator stable feed_path feed_aliases; do
 	sdk_versions+=("$version")
 	sdk_format["$version"]="$format"
 	sdk_separator["$version"]="$separator"
 	sdk_stable["$version"]="$stable"
+	sdk_feed_path["$version"]="$feed_path"
+	sdk_feed_aliases["$version"]="$feed_aliases"
 	[[ "$stable" == true ]] && stable_sdk_versions+=("$version")
 done < <(python3 "$ROOT/scripts/build_targets.py" sdk-list)
 while IFS= read -r arch; do release_arch["$arch"]=1; done < <(
@@ -96,14 +100,15 @@ for artifact in "${artifacts[@]}"; do
 
 	packages=("$artifact"/*."$extension")
 	for package in easytier easytier-noweb luci-app-easytier luci-i18n-easytier-zh-cn; do
-		matches=("$artifact/$package$separator"*."$extension")
+		# Versions start with a digit, so easytier-noweb cannot satisfy easytier.
+		matches=("$artifact/$package$separator"[0-9]*."$extension")
 		[[ ${#matches[@]} -gt 0 ]] || {
 			echo "Missing $package package in $name" >&2
 			exit 1
 		}
 	done
 
-	destination="$SITE_ROOT/feeds/$sdk/$arch/packages_ci"
+	destination="$SITE_ROOT/feeds/${sdk_feed_path[$sdk]}/$arch/packages_ci"
 	mkdir -p "$destination"
 	cp -- "${packages[@]}" "$destination/"
 
@@ -122,6 +127,14 @@ for artifact in "${artifacts[@]}"; do
 		}
 		cp -- "$artifact/packages.adb" "$destination/"
 	fi
+
+	# Pages requires real files; copy the signed feed unchanged for legacy URLs.
+	IFS=',' read -r -a aliases <<< "${sdk_feed_aliases[$sdk]}"
+	for alias in "${aliases[@]}"; do
+		alias_destination="$SITE_ROOT/feeds/$alias/$arch/packages_ci"
+		mkdir -p "$alias_destination"
+		cp -- "$destination/"* "$alias_destination/"
+	done
 
 	stable_count=$((stable_count + 1))
 	sdk_count[$sdk]=$(( ${sdk_count[$sdk]:-0} + 1 ))
@@ -149,9 +162,10 @@ import sys
 feed_root = pathlib.Path(sys.argv[1])
 manifest = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
 opkg_sdk_roots = [
-    feed_root / sdk["version"]
+    feed_root / path
     for sdk in manifest["sdks"]
     if sdk["stable"] and sdk["package_format"] == "ipk"
+    for path in [sdk["feed_path"], *sdk["feed_aliases"]]
 ]
 required = {
     "easytier",

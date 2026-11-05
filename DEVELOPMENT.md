@@ -83,6 +83,10 @@ npm run check
 
 同步检查 `config/build-targets.json`、`easytier/arch.mk`、`build.yml` 的手动架构选项，以及 README 和发布包指南中的 SDK 版本说明。`npm run check` 会验证构建目标和手动架构选项一致；新架构还应核对上游资产映射及 ABI。
 
+稳定版 SDK 的 `version` 固定构建基线，`feed_path` 独立指定软件源目录，`feed_aliases` 列出需要保留的旧目录。当前 25.12.5 SDK 使用 `feed_path: "25.12"`、`feed_aliases: ["25.12.5"]`；24.10.8 保持 `feed_path: "24.10.8"` 且无别名。构建选择和 Release 归档名称继续使用具体 SDK 版本；Snapshot 仅发布 Release 归档，不生成稳定软件源。
+
+升级 SDK 时保留系列目录及所有已发布的兼容别名；别名镜像该系列的当前签名索引和包，不代表永久固定旧 SDK。发布到 GitHub Pages 的兼容目录使用实际文件，不能依赖软链接。系列软件源不替代跨补丁版本兼容验证：核对用户态包的架构、ABI 和依赖，并在设备上验证安装与运行；`kmod-tun` 由匹配设备固件的官方源提供。
+
 ### 软件源签名密钥
 
 GitHub Secrets `OPKG_FEED_SIGNING_KEY` 与 `.github/pages/keys/easytier-opkg.pub` 配对；`APK_FEED_SIGNING_KEY` 与 `.github/pages/keys/easytier-apk.pem` 配对。发布和签名索引验证都要求两种私钥 Secret 可用。设备安装的公钥是本地信任配置，仓库替换公钥不会自动更新设备上的信任密钥；密钥轮换需要另行安排设备迁移，本指南不改变当前签名流程。

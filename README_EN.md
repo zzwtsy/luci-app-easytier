@@ -71,7 +71,11 @@ You can install only `luci-app-easytier` and upload a custom build from the prog
 
 ### Install from the GitHub Pages package feed
 
-Signed feed packages are built for matching OpenWrt 24.10.8 and 25.12.5 SDKs. Each SDK and architecture feed keeps the current EasyTier packages; older versions remain available from Releases. Use the package architecture for your device. On 24.10, check it with `opkg print-architecture`; on 25.12 and later, use `apk --print-arch`. For Snapshot and other point releases, use the matching package archive from Releases.
+Signed packages currently use pinned OpenWrt 24.10.8 and 25.12.5 SDKs. The 24.10.8 feed address stays unchanged; the 25.12 series uses `feeds/25.12/`, with the feed directory maintained independently of the SDK version. Each feed and architecture keeps the current EasyTier packages. Older versions remain available from Releases, whose archive names retain the exact SDK version. Snapshot packages are available only from Releases, without a stable feed.
+
+Use the package architecture for your device. On 24.10, check it with `opkg print-architecture`; on 25.12 and later, use `apk --print-arch`. A series feed address does not guarantee compatibility with every point release: check userspace package dependencies and validate operation on the device. Install `kmod-tun` from the official feed matching the device firmware. For other releases, use the matching package archive from Releases.
+
+Existing `feeds/25.12.5/` addresses remain compatibility aliases serving the same current packages as `feeds/25.12/`; they do not pin the build SDK to 25.12.5 permanently. Use the series address below for new installations.
 
 OpenWrt 24.10.8:
 
@@ -86,14 +90,14 @@ opkg update
 opkg install easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```
 
-OpenWrt 25.12.5:
+OpenWrt 25.12 series:
 
 ```sh
 . /etc/openwrt_release
 FEED_BASE=https://zzwtsy.github.io/luci-app-easytier
 ARCH="$DISTRIB_ARCH"
 wget -O /etc/apk/keys/easytier-apk.pem "$FEED_BASE/keys/easytier-apk.pem"
-echo "$FEED_BASE/feeds/25.12.5/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
+echo "$FEED_BASE/feeds/25.12/$ARCH/packages_ci/packages.adb" >> /etc/apk/repositories.d/customfeeds.list
 apk update
 apk add easytier luci-app-easytier luci-i18n-easytier-zh-cn
 ```

@@ -3,12 +3,16 @@
   "sdks": [
     {
       "version": "24.10.8",
+      "feed_path": "24.10.8",
+      "feed_aliases": [],
       "package_format": "ipk",
       "package_separator": "_",
       "stable": true
     },
     {
       "version": "25.12.5",
+      "feed_path": "25.12",
+      "feed_aliases": ["25.12.5"],
       "package_format": "apk",
       "package_separator": "-",
       "stable": true

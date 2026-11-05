@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import pathlib
 import unittest
@@ -32,6 +33,57 @@ class BuildTargetTests(unittest.TestCase):
         self.assertEqual(len(matrix), len(self.manifest["release_architectures"]) * len(self.manifest["sdks"]))
         formats = {sdk["version"]: sdk["package_format"] for sdk in self.manifest["sdks"]}
         self.assertTrue(all(item["package_format"] == formats[item["sdk"]] for item in matrix))
+
+    def test_feed_directory_does_not_replace_sdk_in_matrix(self) -> None:
+        matrix = build_targets.build_matrix(self.manifest, "release", "x86_64")
+        self.assertEqual(
+            [item["sdk"] for item in matrix],
+            [sdk["version"] for sdk in self.manifest["sdks"]],
+        )
+
+    def test_stable_sdk_requires_explicit_feed_metadata(self) -> None:
+        for field in ("feed_path", "feed_aliases"):
+            with self.subTest(field=field):
+                manifest = copy.deepcopy(self.manifest)
+                del manifest["sdks"][0][field]
+                with self.assertRaisesRegex(ValueError, "feed"):
+                    build_targets.validate_manifest(manifest)
+
+    def test_unsafe_feed_paths_are_rejected(self) -> None:
+        for path in ("", ".", "..", "../25.12", "/25.12", "25.12/other", "25.12,other", "25.12\tother", None):
+            for field in ("feed_path", "feed_aliases"):
+                with self.subTest(path=path, field=field):
+                    manifest = copy.deepcopy(self.manifest)
+                    manifest["sdks"][0][field] = [path] if field == "feed_aliases" else path
+                    with self.assertRaisesRegex(ValueError, "invalid feed path"):
+                        build_targets.validate_manifest(manifest)
+
+    def test_duplicate_feed_destinations_are_rejected(self) -> None:
+        cases = (
+            {"feed_path": "24.10.8"},
+            {"feed_aliases": ["25.12"]},
+            {"feed_aliases": ["25.12.5", "25.12.5"]},
+            {"feed_aliases": ["24.10.8"]},
+        )
+        for fields in cases:
+            with self.subTest(fields=fields):
+                manifest = copy.deepcopy(self.manifest)
+                manifest["sdks"][1].update(fields)
+                with self.assertRaisesRegex(ValueError, "duplicate feed path"):
+                    build_targets.validate_manifest(manifest)
+
+    def test_feed_aliases_must_be_an_array(self) -> None:
+        self.manifest["sdks"][0]["feed_aliases"] = "24.10.8"
+        with self.assertRaisesRegex(ValueError, "feed_aliases must be an array"):
+            build_targets.validate_manifest(self.manifest)
+
+    def test_unstable_sdk_cannot_publish_stable_feeds(self) -> None:
+        for field, value in (("feed_path", "SNAPSHOT"), ("feed_aliases", [])):
+            with self.subTest(field=field):
+                manifest = copy.deepcopy(self.manifest)
+                manifest["sdks"][-1][field] = value
+                with self.assertRaisesRegex(ValueError, "unstable SDK"):
+                    build_targets.validate_manifest(manifest)
 
     def test_pr_matrix_contains_eight_architectures_for_each_sdk(self) -> None:
         matrix = build_targets.build_matrix(self.manifest, "pr-priority") + build_targets.build_matrix(
